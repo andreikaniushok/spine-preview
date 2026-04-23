@@ -157,14 +157,25 @@ export function ControlPanel(props: ControlPanelProps) {
             onChange={(e) => onDebugToggle(e.target.checked)}
           />
         </div>
+      </section>
+
+      <section>
+        <h2>Settings</h2>
         <div className="row checkbox-row">
-          <label>White theme</label>
-          <input
-            type="checkbox"
-            aria-label="Toggle light theme"
-            checked={theme === "light"}
-            onChange={(e) => onThemeToggle(e.target.checked ? "light" : "dark")}
-          />
+          <label htmlFor="theme-switch">White theme</label>
+          <label className="theme-toggle" htmlFor="theme-switch">
+            <input
+              id="theme-switch"
+              className="theme-toggle-input"
+              type="checkbox"
+              aria-label="Toggle light theme"
+              checked={theme === "light"}
+              onChange={(event) => onThemeToggle(event.target.checked ? "light" : "dark")}
+            />
+            <span className="theme-toggle-track">
+              <span className="theme-toggle-thumb" />
+            </span>
+          </label>
         </div>
       </section>
     </aside>
