@@ -25,6 +25,11 @@ interface Notice {
   message: string;
 }
 
+const rendererBackgroundByTheme = {
+  dark: "#0d111a",
+  light: "#f5f7fb",
+} as const;
+
 function getPersistedState(): PersistedState {
   const fallback: PersistedState = { speed: 1, mode: "loop", theme: "dark" };
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -62,6 +67,7 @@ export function useSpinePreview() {
     frameTimeMs: 0,
   });
   const [notices, setNotices] = useState<Notice[]>([]);
+  const themeRef = useRef<"dark" | "light">(persisted.theme);
 
   const centerModelInCanvas = useCallback((model: SpineModel | null) => {
     if (!model) {
@@ -101,6 +107,11 @@ export function useSpinePreview() {
   }, [mode]);
 
   useEffect(() => {
+    themeRef.current = theme;
+    pixiRef.current?.setBackground(rendererBackgroundByTheme[theme]);
+  }, [theme]);
+
+  useEffect(() => {
     const host = hostRef.current;
     if (!host) {
       return;
@@ -117,6 +128,7 @@ export function useSpinePreview() {
       scene.viewport.addChild(spineLayer);
 
       pixiRef.current = pixi;
+      pixi.setBackground(rendererBackgroundByTheme[themeRef.current]);
       sceneRef.current = scene;
       spineManagerRef.current = new SpineManager(spineLayer);
       animationRef.current = animationController;
