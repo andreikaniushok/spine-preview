@@ -7,7 +7,16 @@ import { SpineManager } from "../spine/SpineManager";
 import { AnimationController } from "../animation/AnimationController";
 import { DragDropHandler } from "../utils/DragDropHandler";
 import { PerformanceMonitor } from "../utils/PerformanceMonitor";
-import type { PerformanceSnapshot, PlaybackMode, SpineModel } from "../types/spine";
+import { attachAtlasRenderPasses, buildAtlasAnalysis } from "../analysis/atlasAnalysis";
+import { buildSpinePerformanceReport } from "../analysis/spinePerformanceReport";
+import { summarizeBenchmark } from "../utils/benchmarkStats";
+import type { PerformanceBaseline } from "../types/performanceBaseline";
+import type {
+  BenchmarkUiState,
+  PerformanceSnapshot,
+  PlaybackMode,
+  SpineModel,
+} from "../types/spine";
 
 const STORAGE_KEY = "spine-preview-state";
 
@@ -51,6 +60,14 @@ export function useSpinePreview() {
   const spineManagerRef = useRef<SpineManager | null>(null);
   const animationRef = useRef<AnimationController | null>(null);
   const metricsRef = useRef<PerformanceMonitor | null>(null);
+  const benchmarkRef = useRef({
+    active: false,
+    durationMs: 10_000,
+    samples: [] as number[],
+    startAt: 0,
+    stopRequested: false,
+  });
+  const benchmarkProgressEmitRef = useRef(0);
 
   const [models, setModels] = useState<SpineModel[]>([]);
   const [activeModel, setActiveModel] = useState<SpineModel | null>(null);
@@ -67,6 +84,9 @@ export function useSpinePreview() {
     frameTimeMs: 0,
   });
   const [notices, setNotices] = useState<Notice[]>([]);
+  const [benchmark, setBenchmark] = useState<BenchmarkUiState>({ status: "idle" });
+  const [performanceBaseline, setPerformanceBaseline] = useState<PerformanceBaseline | null>(null);
+  const [atlasLiveTick, setAtlasLiveTick] = useState(0);
   const themeRef = useRef<"dark" | "light">(persisted.theme);
 
   const centerModelInCanvas = useCallback((model: SpineModel | null) => {
@@ -97,6 +117,34 @@ export function useSpinePreview() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ speed, mode, theme }));
   }, [speed, mode, theme]);
+
+  const activeSkinName = activeModel?.spine.skeleton.skin?.name ?? "";
+
+  const performanceReport = useMemo(() => {
+    if (!activeModel) {
+      return null;
+    }
+    return buildSpinePerformanceReport(activeModel.spine.skeleton);
+  }, [activeModel, selectedSkin, activeSkinName]);
+
+  const atlasCore = useMemo(() => {
+    if (!activeModel?.atlasText) {
+      return null;
+    }
+    return buildAtlasAnalysis(
+      activeModel.atlasText,
+      activeModel.atlasFileName,
+      activeModel.spine.skeleton,
+    );
+  }, [activeModel?.id, activeModel?.atlasText, activeModel?.atlasFileName, selectedSkin, activeSkinName]);
+
+  const atlasReport = useMemo(() => {
+    if (!atlasCore || !activeModel) {
+      return atlasCore;
+    }
+    void atlasLiveTick;
+    return attachAtlasRenderPasses(atlasCore, activeModel.spine.skeleton);
+  }, [atlasCore, activeModel, atlasLiveTick]);
 
   useEffect(() => {
     animationRef.current?.setSpeed(speed);
@@ -134,10 +182,37 @@ export function useSpinePreview() {
       animationRef.current = animationController;
       metricsRef.current = new PerformanceMonitor(pixi.app);
 
+      let atlasTicker = 0;
       pixi.app.ticker.add(() => {
         const current = metricsRef.current?.getSnapshot();
         if (current) {
           setMetrics(current);
+        }
+
+        atlasTicker++;
+        if (atlasTicker % 18 === 0) {
+          setAtlasLiveTick((n) => n + 1);
+        }
+
+        const bench = benchmarkRef.current;
+        if (bench.active && current) {
+          bench.samples.push(current.frameTimeMs);
+          const elapsed = performance.now() - bench.startAt;
+          const progress = Math.min(1, elapsed / bench.durationMs);
+          const now = performance.now();
+          if (now - benchmarkProgressEmitRef.current > 120) {
+            benchmarkProgressEmitRef.current = now;
+            setBenchmark({ status: "running", progress });
+          }
+
+          if (elapsed >= bench.durationMs || bench.stopRequested) {
+            bench.active = false;
+            bench.stopRequested = false;
+            const result = summarizeBenchmark(bench.samples, elapsed);
+            bench.samples = [];
+            benchmarkProgressEmitRef.current = 0;
+            setBenchmark({ status: "done", result });
+          }
         }
       });
     });
@@ -284,6 +359,59 @@ export function useSpinePreview() {
     setDebugBones(enabled);
   }, []);
 
+  const startBenchmark = useCallback(
+    (durationSec: number) => {
+      if (!pixiRef.current || !metricsRef.current) {
+        pushNotice("error", "Renderer is not ready yet. Try again in a second.");
+        return;
+      }
+      if (benchmarkRef.current.active) {
+        return;
+      }
+      const bench = benchmarkRef.current;
+      bench.active = true;
+      bench.durationMs = Math.max(1, durationSec) * 1000;
+      bench.samples = [];
+      bench.startAt = performance.now();
+      bench.stopRequested = false;
+      benchmarkProgressEmitRef.current = 0;
+      setBenchmark({ status: "running", progress: 0 });
+      pushNotice("info", `Benchmark started (${durationSec}s).`);
+    },
+    [pushNotice],
+  );
+
+  const stopBenchmark = useCallback(() => {
+    if (!benchmarkRef.current.active) {
+      return;
+    }
+    benchmarkRef.current.stopRequested = true;
+  }, []);
+
+  const clearBenchmark = useCallback(() => {
+    setBenchmark({ status: "idle" });
+  }, []);
+
+  const capturePerformanceBaseline = useCallback(() => {
+    if (!activeModel || !performanceReport) {
+      pushNotice("error", "No active skeleton to save as baseline A.");
+      return;
+    }
+    setPerformanceBaseline({
+      label: "A",
+      modelName: activeModel.name,
+      report: performanceReport,
+    });
+    pushNotice(
+      "info",
+      `Baseline A captured: "${activeModel.name}". Switch the active model to compare as B.`,
+    );
+  }, [activeModel, performanceReport, pushNotice]);
+
+  const clearPerformanceBaseline = useCallback(() => {
+    setPerformanceBaseline(null);
+  }, []);
+
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.code === "Space") {
@@ -315,6 +443,10 @@ export function useSpinePreview() {
         theme,
         metrics,
         notices,
+        benchmark,
+        performanceReport,
+        performanceBaseline,
+        atlasReport,
       },
       actions: {
         loadFiles,
@@ -330,6 +462,11 @@ export function useSpinePreview() {
         toggleDebug,
         setTheme,
         dismissNotice,
+        startBenchmark,
+        stopBenchmark,
+        clearBenchmark,
+        capturePerformanceBaseline,
+        clearPerformanceBaseline,
       },
     }),
     [
@@ -345,6 +482,10 @@ export function useSpinePreview() {
       theme,
       metrics,
       notices,
+      benchmark,
+      performanceReport,
+      performanceBaseline,
+      atlasReport,
       loadFiles,
       selectModel,
       removeModel,
@@ -356,7 +497,13 @@ export function useSpinePreview() {
       setSkin,
       setModelAlpha,
       toggleDebug,
+      setTheme,
       dismissNotice,
+      startBenchmark,
+      stopBenchmark,
+      clearBenchmark,
+      capturePerformanceBaseline,
+      clearPerformanceBaseline,
     ],
   );
 

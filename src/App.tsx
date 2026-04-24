@@ -1,6 +1,7 @@
 import "./App.css";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ControlPanel } from "./components/ControlPanel";
+import { PerformanceReportPanel } from "./components/PerformanceReportPanel";
 import { useSpinePreview } from "./hooks/useSpinePreview";
 
 function App() {
@@ -44,8 +45,14 @@ function App() {
         onAlphaChange={preview.actions.setModelAlpha}
         onDebugToggle={preview.actions.toggleDebug}
         onThemeToggle={preview.actions.setTheme}
+        benchmark={vm.benchmark}
+        onBenchmarkStart={preview.actions.startBenchmark}
+        onBenchmarkStop={preview.actions.stopBenchmark}
+        onBenchmarkClear={preview.actions.clearBenchmark}
+        atlasReport={vm.atlasReport}
       />
 
+      <div className="scene-column">
       <main
         className={`scene-wrap ${isDraggingFiles ? "drag-over" : ""}`}
         onDragOver={(event) => {
@@ -122,6 +129,15 @@ function App() {
           </div>
         )}
       </main>
+      </div>
+
+      <PerformanceReportPanel
+        report={vm.performanceReport}
+        atlasReport={vm.atlasReport}
+        baseline={vm.performanceBaseline}
+        onCaptureBaseline={preview.actions.capturePerformanceBaseline}
+        onClearBaseline={preview.actions.clearPerformanceBaseline}
+      />
     </div>
   );
 }
