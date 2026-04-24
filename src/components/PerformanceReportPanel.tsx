@@ -5,6 +5,9 @@ import {
   impactFromVertices,
   summarizeImpactForCompare,
 } from "../analysis/spinePerformanceReport";
+import { useI18n } from "../i18n/useI18n";
+import type { MessageKey } from "../i18n/messages";
+import type { MessageVars } from "../i18n/types";
 import type { PerformanceBaseline } from "../types/performanceBaseline";
 
 interface PerformanceReportPanelProps {
@@ -19,43 +22,51 @@ function impactBadge(level: ImpactLevel): string {
   return level;
 }
 
+type Translate = (key: MessageKey, vars?: MessageVars) => string;
+
 function compareLine(
-  label: string,
+  t: Translate,
+  labelKey: MessageKey,
   a: ImpactLevel | number | string,
   b: ImpactLevel | number | string,
 ): string {
+  const label = t(labelKey);
   if (typeof a === "number" && typeof b === "number") {
     const d = b - a;
-    const arrow = d === 0 ? "=" : d > 0 ? "up" : "down";
-    return `${label}: A ${a} -> B ${b} (${arrow})`;
+    const arrow =
+      d === 0 ? t("perf.arrow_same") : d > 0 ? t("perf.arrow_up") : t("perf.arrow_down");
+    return t("perf.compare_num", { label, a, b, arrow });
   }
   if (typeof a === "string" && typeof b === "string") {
-    return `${label}: A ${a} / B ${b}`;
+    return t("perf.compare_str", { label, a, b });
   }
   const na = summarizeImpactForCompare(a as ImpactLevel);
   const nb = summarizeImpactForCompare(b as ImpactLevel);
-  const arrow = nb === na ? "=" : nb > na ? "up" : "down";
-  return `${label}: A ${a} -> B ${b} (${arrow})`;
+  const arrow =
+    nb === na ? t("perf.arrow_same") : nb > na ? t("perf.arrow_up") : t("perf.arrow_down");
+  return t("perf.compare_lvl", { label, a: String(a), b: String(b), arrow });
 }
 
 export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
   const { report, atlasReport, baseline, onCaptureBaseline, onClearBaseline } = props;
+  const { t } = useI18n();
 
   if (!report) {
     return (
       <aside className="performance-panel performance-panel-empty">
-        <h2 className="performance-title">Spine performance analysis</h2>
-        <p className="performance-muted">Load a skeleton to see the report.</p>
+        <h2 className="performance-title">{t("perf.title")}</h2>
+        <p className="performance-muted">{t("perf.empty")}</p>
       </aside>
     );
   }
 
   const cmp = baseline
     ? {
-        ri: compareLine("RI (render)", baseline.report.renderingImpact, report.renderingImpact),
-        ci: compareLine("CI (compute)", baseline.report.computeImpact, report.computeImpact),
+        ri: compareLine(t, "perf.cmp_ri", baseline.report.renderingImpact, report.renderingImpact),
+        ci: compareLine(t, "perf.cmp_ci", baseline.report.computeImpact, report.computeImpact),
         verts: compareLine(
-          "Peak vertices",
+          t,
+          "perf.cmp_verts",
           baseline.report.peakVerticesSampled,
           report.peakVerticesSampled,
         ),
@@ -74,8 +85,8 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
   return (
     <aside className="performance-panel">
       <header className="performance-header">
-        <h2 className="performance-title">Spine performance analysis</h2>
-        <div className="ri-ci-scores" aria-label="Summary impact scores">
+        <h2 className="performance-title">{t("perf.title")}</h2>
+        <div className="ri-ci-scores" aria-label={t("perf.compare_aria")}>
           <div className="ri-ci-score">
             <span className="ri-ci-num">{riScore}</span>
             <span className="ri-ci-label">RI</span>
@@ -86,20 +97,20 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
           </div>
         </div>
         <p className="performance-skeleton-name">
-          Skeleton: <strong>{report.skeletonName ?? "Unnamed"}</strong>
+          {t("perf.skeleton")}{" "}
+          <strong>{report.skeletonName ?? t("perf.unnamed")}</strong>
         </p>
         <div className="performance-baseline-actions">
           <button type="button" onClick={onCaptureBaseline}>
-            Capture current as baseline A
+            {t("perf.capture_baseline")}
           </button>
           <button type="button" className="secondary" onClick={onClearBaseline} disabled={!baseline}>
-            Clear A
+            {t("perf.clear_baseline")}
           </button>
         </div>
         {baseline && (
           <p className="performance-baseline-hint">
-            Baseline A: <strong>{baseline.modelName}</strong> ({baseline.label}). The active skeleton is{" "}
-            <strong>B</strong> for comparison.
+            {t("perf.baseline_hint", { model: baseline.modelName, label: baseline.label })}
           </p>
         )}
         {cmp && (
@@ -122,72 +133,71 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
       </header>
 
       <section className="perf-section">
-        <h3>Summary</h3>
+        <h3>{t("perf.summary")}</h3>
         <div className="perf-kv-grid">
-          <span className="perf-k">Bones</span>
+          <span className="perf-k">{t("perf.bones")}</span>
           <span className="perf-v">{report.boneCount}</span>
-          <span className="perf-k">Animations</span>
+          <span className="perf-k">{t("perf.animations")}</span>
           <span className="perf-v">{report.animationCount}</span>
-          <span className="perf-k">Skins</span>
+          <span className="perf-k">{t("perf.skins")}</span>
           <span className="perf-v">{report.skinCount}</span>
-          <span className="perf-k">Max bone depth</span>
+          <span className="perf-k">{t("perf.max_bone_depth")}</span>
           <span className="perf-v">{report.maxBoneDepth}</span>
         </div>
       </section>
 
       {atlasReport && (
         <section className="perf-section">
-          <h3>Texture atlas</h3>
+          <h3>{t("perf.texture_atlas")}</h3>
           <p className="performance-muted">
-            Parsed with Spine <code>TextureAtlas</code> from <strong>{atlasReport.atlasFileName}</strong>.
+            {t("perf.atlas_parsed_lead")} <code>TextureAtlas</code> {t("perf.atlas_parsed_from")}{" "}
+            <strong>{atlasReport.atlasFileName}</strong>.
           </p>
           {atlasReport.parseError ? (
-            <p className="performance-atlas-error">Parse error: {atlasReport.parseError}</p>
+            <p className="performance-atlas-error">
+              {t("perf.parse_error")} {atlasReport.parseError}
+            </p>
           ) : (
             <>
-              <h4 className="perf-subheading">Atlas summary</h4>
+              <h4 className="perf-subheading">{t("perf.atlas_summary")}</h4>
               <div className="perf-kv-grid">
-                <span className="perf-k">Pages</span>
+                <span className="perf-k">{t("control.pages")}</span>
                 <span className="perf-v">{atlasReport.totalPages}</span>
-                <span className="perf-k">Regions</span>
+                <span className="perf-k">{t("control.regions")}</span>
                 <span className="perf-v">{atlasReport.totalRegions}</span>
                 {atlasReport.renderPasses ? (
                   <>
-                    <span className="perf-k">Draw calls</span>
+                    <span className="perf-k">{t("control.draw_calls")}</span>
                     <span className="perf-v">{atlasReport.renderPasses.estimatedDrawCalls}</span>
-                    <span className="perf-k">Page switches</span>
+                    <span className="perf-k">{t("control.page_switches")}</span>
                     <span className="perf-v">{atlasReport.renderPasses.texturePageSwitches}</span>
                   </>
                 ) : null}
               </div>
               {atlasReport.renderPasses && (
-                <p className="performance-muted">
-                  Draw calls and page switches are estimated from <code>drawOrder</code> for slots with region/mesh
-                  attachments bound to an atlas region: a new batch is assumed when the texture page or{" "}
-                  <code>BlendMode</code> changes (typical batching split, not a GPU driver count).
-                </p>
+                <p className="performance-muted">{t("perf.atlas_draw_hint")}</p>
               )}
               <div className="perf-kv-grid">
-                <span className="perf-k">Page pixels</span>
+                <span className="perf-k">{t("perf.page_pixels")}</span>
                 <span className="perf-v">{atlasReport.totalPagePixels.toLocaleString()}</span>
-                <span className="perf-k">Packed rect pixels</span>
+                <span className="perf-k">{t("perf.packed_rect_pixels")}</span>
                 <span className="perf-v">{atlasReport.totalPackedPixels.toLocaleString()}</span>
-                <span className="perf-k">Utilization (packed / page)</span>
+                <span className="perf-k">{t("perf.utilization_packed")}</span>
                 <span className="perf-v">{atlasReport.overallUtilizationPercent.toFixed(1)}%</span>
               </div>
 
-              <h4 className="perf-subheading">Pages</h4>
+              <h4 className="perf-subheading">{t("perf.pages_table")}</h4>
               <div className="perf-table-wrap">
                 <table className="perf-table">
                   <thead>
                     <tr>
-                      <th>Texture</th>
-                      <th>Size</th>
-                      <th>Regions</th>
-                      <th>Utilization</th>
-                      <th>Filter</th>
-                      <th>Wrap U/V</th>
-                      <th>PMA</th>
+                      <th>{t("perf.texture")}</th>
+                      <th>{t("perf.size")}</th>
+                      <th>{t("perf.regions")}</th>
+                      <th>{t("perf.utilization")}</th>
+                      <th>{t("perf.filter")}</th>
+                      <th>{t("perf.wrap_uv")}</th>
+                      <th>{t("perf.pma")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -205,7 +215,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
                         <td>
                           {p.wrapU} / {p.wrapV}
                         </td>
-                        <td>{p.premultipliedAlpha ? "Yes" : "No"}</td>
+                        <td>{p.premultipliedAlpha ? t("common.yes") : t("common.no")}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -214,36 +224,33 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
 
               {atlasReport.linkage && (
                 <>
-                  <h4 className="perf-subheading">Atlas vs skeleton skins</h4>
+                  <h4 className="perf-subheading">{t("perf.atlas_vs_skins")}</h4>
                   <div className="perf-kv-grid">
-                    <span className="perf-k">Distinct attachment texture paths</span>
+                    <span className="perf-k">{t("perf.distinct_paths")}</span>
                     <span className="perf-v">{atlasReport.linkage.attachmentTexturePaths}</span>
-                    <span className="perf-k">Resolved in atlas</span>
+                    <span className="perf-k">{t("perf.resolved_in_atlas")}</span>
                     <span className="perf-v">{atlasReport.linkage.resolvedInAtlas}</span>
-                    <span className="perf-k">Missing in atlas</span>
+                    <span className="perf-k">{t("perf.missing_in_atlas")}</span>
                     <span className="perf-v">{atlasReport.linkage.missingInAtlas}</span>
-                    <span className="perf-k">Unused atlas regions</span>
+                    <span className="perf-k">{t("perf.unused_regions")}</span>
                     <span className="perf-v">{atlasReport.linkage.orphanRegions}</span>
                   </div>
-                  <p className="performance-muted">
-                    Matching uses each region/mesh <code>path</code> (fallback <code>name</code>) against{" "}
-                    <code>TextureAtlas.findRegion</code>, then the file base name if needed.
-                  </p>
+                  <p className="performance-muted">{t("perf.atlas_match_hint")}</p>
                 </>
               )}
 
-              <h4 className="perf-subheading">Largest regions (by packed pixel area)</h4>
+              <h4 className="perf-subheading">{t("perf.largest_regions")}</h4>
               <div className="perf-table-wrap">
                 <table className="perf-table">
                   <thead>
                     <tr>
-                      <th>Region</th>
-                      <th>Page</th>
-                      <th>xy</th>
-                      <th>size</th>
-                      <th>Pixels</th>
-                      <th>Rot</th>
-                      <th>Original</th>
+                      <th>{t("perf.region_col")}</th>
+                      <th>{t("perf.page_col")}</th>
+                      <th>{t("perf.xy_col")}</th>
+                      <th>{t("perf.size_col")}</th>
+                      <th>{t("perf.pixels_col")}</th>
+                      <th>{t("perf.rot_col")}</th>
+                      <th>{t("perf.original_col")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -258,7 +265,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
                           {r.width}×{r.height}
                         </td>
                         <td>{r.pixelArea.toLocaleString()}</td>
-                        <td>{r.rotated ? "Yes" : "No"}</td>
+                        <td>{r.rotated ? t("common.yes") : t("common.no")}</td>
                         <td>
                           {r.originalWidth}×{r.originalHeight}
                         </td>
@@ -273,47 +280,57 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
       )}
 
       <section className="perf-section">
-        <h3>Rendering impact</h3>
+        <h3>{t("perf.rendering_impact")}</h3>
         <p>
           <span className="impact-pill">{impactBadge(report.renderingImpact)}</span>{" "}
           <span className="performance-muted">
-            {report.peakVerticesSampled} peak vertices (max across animation time samples)
+            {t("perf.peak_vertices_caption", { count: report.peakVerticesSampled })}
           </span>
         </p>
       </section>
 
       <section className="perf-section">
-        <h3>Computational impact</h3>
+        <h3>{t("perf.compute_impact")}</h3>
         <p>
           <span className="impact-pill">{impactBadge(report.computeImpact)}</span>{" "}
           <span className="performance-muted">
-            {report.totalWeightedBoneRefsWorst} weighted bone references (max), {report.constraintCountData}{" "}
-            constraints in skeleton data
+            {t("perf.weighted_bone_caption", {
+              weighted: report.totalWeightedBoneRefsWorst,
+              constraints: report.constraintCountData,
+            })}
           </span>
         </p>
       </section>
 
       <section className="perf-section">
-        <h3>Animation impact overview</h3>
+        <h3>{t("perf.anim_overview")}</h3>
         <ul className="perf-list">
-          <li>Total animations: {report.animationCount}</li>
-          <li>With physics: {report.animationsWithPhysics}</li>
-          <li>With clipping: {report.animationsWithClipping}</li>
-          <li>With special blend modes: {report.animationsWithSpecialBlend}</li>
+          <li>
+            {t("perf.anim_total")} {report.animationCount}
+          </li>
+          <li>
+            {t("perf.anim_physics")} {report.animationsWithPhysics}
+          </li>
+          <li>
+            {t("perf.anim_clipping")} {report.animationsWithClipping}
+          </li>
+          <li>
+            {t("perf.anim_blend")} {report.animationsWithSpecialBlend}
+          </li>
         </ul>
       </section>
 
       <section className="perf-section">
-        <h3>Per-animation impact</h3>
+        <h3>{t("perf.per_animation")}</h3>
         <div className="perf-table-wrap">
           <table className="perf-table">
             <thead>
               <tr>
-                <th>Animation</th>
-                <th>Duration</th>
-                <th>Rendering impact</th>
-                <th>Computational impact</th>
-                <th>Active features</th>
+                <th>{t("perf.anim_col")}</th>
+                <th>{t("perf.duration_col")}</th>
+                <th>{t("perf.render_impact_col")}</th>
+                <th>{t("perf.compute_impact_col")}</th>
+                <th>{t("perf.active_features_col")}</th>
               </tr>
             </thead>
             <tbody>
@@ -332,35 +349,36 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
       </section>
 
       <section className="perf-section">
-        <h3>Global skeleton statistics</h3>
+        <h3>{t("perf.global_skeleton")}</h3>
         <div className="perf-kv-grid">
-          <span className="perf-k">Total bones</span>
+          <span className="perf-k">{t("perf.total_bones")}</span>
           <span className="perf-v">{report.boneCount}</span>
-          <span className="perf-k">Max bone depth</span>
+          <span className="perf-k">{t("perf.max_bone_depth")}</span>
           <span className="perf-v">{report.maxBoneDepth}</span>
-          <span className="perf-k">Total animations</span>
+          <span className="perf-k">{t("perf.total_animations_label")}</span>
           <span className="perf-v">{report.animationCount}</span>
-          <span className="perf-k">Skins</span>
+          <span className="perf-k">{t("perf.skins")}</span>
           <span className="perf-v">{report.skinCount}</span>
         </div>
       </section>
 
       <section className="perf-section">
-        <h3>Mesh statistics</h3>
+        <h3>{t("perf.mesh_stats")}</h3>
         <p>
-          Worst-case impact: <span className="impact-pill">{impactBadge(report.renderingImpact)}</span>
+          {t("perf.mesh_worst_prefix")}{" "}
+          <span className="impact-pill">{impactBadge(report.renderingImpact)}</span>
         </p>
-        <h4 className="perf-subheading">Per-animation breakdown</h4>
+        <h4 className="perf-subheading">{t("perf.mesh_per_heading")}</h4>
         <div className="perf-table-wrap">
           <table className="perf-table">
             <thead>
               <tr>
-                <th>Animation</th>
-                <th>Active meshes</th>
-                <th>Total vertices</th>
-                <th>Deformed</th>
-                <th>Weighted</th>
-                <th>Impact</th>
+                <th>{t("perf.anim_col")}</th>
+                <th>{t("perf.mesh_active")}</th>
+                <th>{t("perf.mesh_total_vertices")}</th>
+                <th>{t("perf.mesh_deformed")}</th>
+                <th>{t("perf.mesh_weighted")}</th>
+                <th>{t("perf.mesh_impact")}</th>
               </tr>
             </thead>
             <tbody>
@@ -380,19 +398,22 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
       </section>
 
       <section className="perf-section">
-        <h3>Global mesh details</h3>
+        <h3>{t("perf.global_mesh_detail")}</h3>
         <p className="performance-muted">
-          Showing top {report.globalMeshTop.length} meshes by vertex count. Total: {report.globalMeshTotalSlots} meshes
+          {t("perf.global_mesh_showing", {
+            shown: report.globalMeshTop.length,
+            total: report.globalMeshTotalSlots,
+          })}
         </p>
         <div className="perf-table-wrap">
           <table className="perf-table">
             <thead>
               <tr>
-                <th>Slot / attachment</th>
-                <th>Vertices</th>
-                <th>Deformed</th>
-                <th>Bone weights</th>
-                <th>Parent mesh</th>
+                <th>{t("perf.mesh_slot")}</th>
+                <th>{t("perf.mesh_vertices")}</th>
+                <th>{t("perf.mesh_deformed_col")}</th>
+                <th>{t("perf.mesh_bone_weights")}</th>
+                <th>{t("perf.mesh_parent")}</th>
               </tr>
             </thead>
             <tbody>
@@ -400,9 +421,9 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
                 <tr key={row.slotName}>
                   <td>{row.slotName}</td>
                   <td>{row.vertices}</td>
-                  <td>{row.deformed ? "Yes" : "No"}</td>
+                  <td>{row.deformed ? t("common.yes") : t("common.no")}</td>
                   <td>{row.boneWeights}</td>
-                  <td>{row.hasParentMesh ? "Yes" : "No"}</td>
+                  <td>{row.hasParentMesh ? t("common.yes") : t("common.no")}</td>
                 </tr>
               ))}
             </tbody>
@@ -411,28 +432,28 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
       </section>
 
       <section className="perf-section">
-        <h3>Clipping masks</h3>
+        <h3>{t("perf.clipping_title")}</h3>
         <p>
-          Worst-case impact:{" "}
+          {t("perf.clip_worst_prefix")}{" "}
           <span className="impact-pill">{impactBadge(impactFromVertices(worstClipVertices))}</span>
         </p>
-        <h4 className="perf-subheading">Per-animation breakdown</h4>
+        <h4 className="perf-subheading">{t("perf.clip_per_heading")}</h4>
         <div className="perf-table-wrap">
           <table className="perf-table">
             <thead>
               <tr>
-                <th>Animation</th>
-                <th>Has clipping</th>
-                <th>Active masks</th>
-                <th>Total vertices</th>
-                <th>Impact</th>
+                <th>{t("perf.clip_anim")}</th>
+                <th>{t("perf.clip_has")}</th>
+                <th>{t("perf.clip_masks")}</th>
+                <th>{t("perf.clip_vertices")}</th>
+                <th>{t("perf.clip_impact")}</th>
               </tr>
             </thead>
             <tbody>
               {report.clippingRows.map((row) => (
                 <tr key={row.animation}>
                   <td>{row.animation}</td>
-                  <td>{row.hasClipping ? "Yes" : "No"}</td>
+                  <td>{row.hasClipping ? t("common.yes") : t("common.no")}</td>
                   <td>{row.activeMasks}</td>
                   <td>{row.clipVertices}</td>
                   <td>{row.impact}</td>
@@ -442,36 +463,36 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
           </table>
         </div>
         {!report.clippingRows.some((r) => r.hasClipping) && (
-          <p className="performance-muted">No active clipping masks found on the sampled poses.</p>
+          <p className="performance-muted">{t("perf.clip_no_masks")}</p>
         )}
       </section>
 
       <section className="perf-section">
-        <h3>Blend modes</h3>
+        <h3>{t("perf.blend_title")}</h3>
         <p>
-          Worst-case impact:{" "}
+          {t("perf.blend_worst_prefix")}{" "}
           <span className="impact-pill">
             {impactBadge(worstBlendSlots > 0 ? "Low" : "Minimal")}
           </span>
         </p>
-        <h4 className="perf-subheading">Per-animation breakdown (maximum concurrent)</h4>
+        <h4 className="perf-subheading">{t("perf.blend_per_heading")}</h4>
         <div className="perf-table-wrap">
           <table className="perf-table">
             <thead>
               <tr>
-                <th>Animation</th>
-                <th>Has blend modes</th>
-                <th>Max non-normal</th>
-                <th>Max additive</th>
-                <th>Max multiply</th>
-                <th>Impact</th>
+                <th>{t("perf.blend_anim")}</th>
+                <th>{t("perf.blend_has")}</th>
+                <th>{t("perf.blend_non_normal")}</th>
+                <th>{t("perf.blend_additive")}</th>
+                <th>{t("perf.blend_multiply")}</th>
+                <th>{t("perf.blend_impact")}</th>
               </tr>
             </thead>
             <tbody>
               {report.blendRows.map((row) => (
                 <tr key={row.animation}>
                   <td>{row.animation}</td>
-                  <td>{row.hasBlendModes ? "Yes" : "No"}</td>
+                  <td>{row.hasBlendModes ? t("common.yes") : t("common.no")}</td>
                   <td>{row.maxNonNormal}</td>
                   <td>{row.maxAdditive}</td>
                   <td>{row.maxMultiply}</td>
@@ -484,23 +505,23 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
       </section>
 
       <section className="perf-section">
-        <h3>Constraints</h3>
+        <h3>{t("perf.constraints_title")}</h3>
         <p>
-          Worst-case impact:{" "}
+          {t("perf.constraints_worst_prefix")}{" "}
           <span className="impact-pill">{impactBadge(impactFromConstraints(worstConstraintActive))}</span>
         </p>
-        <h4 className="perf-subheading">Per-animation breakdown</h4>
+        <h4 className="perf-subheading">{t("perf.constraints_per_heading")}</h4>
         <div className="perf-table-wrap">
           <table className="perf-table">
             <thead>
               <tr>
-                <th>Animation</th>
-                <th>Physics</th>
-                <th>IK</th>
-                <th>Transform</th>
-                <th>Path</th>
-                <th>Total active</th>
-                <th>Impact</th>
+                <th>{t("perf.anim_col")}</th>
+                <th>{t("perf.c_phys")}</th>
+                <th>{t("perf.c_ik")}</th>
+                <th>{t("perf.c_transform")}</th>
+                <th>{t("perf.c_path")}</th>
+                <th>{t("perf.c_total_active")}</th>
+                <th>{t("perf.c_impact")}</th>
               </tr>
             </thead>
             <tbody>
@@ -519,14 +540,14 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
           </table>
         </div>
 
-        <h4 className="perf-subheading">Constraint impact breakdown</h4>
+        <h4 className="perf-subheading">{t("perf.constraint_breakdown_heading")}</h4>
         <div className="perf-table-wrap">
           <table className="perf-table">
             <thead>
               <tr>
-                <th>Constraint type</th>
-                <th>Count</th>
-                <th>Share of all constraints</th>
+                <th>{t("perf.constraint_type")}</th>
+                <th>{t("perf.constraint_count")}</th>
+                <th>{t("perf.constraint_share")}</th>
               </tr>
             </thead>
             <tbody>
@@ -541,16 +562,16 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
           </table>
         </div>
 
-        <h4 className="perf-subheading">Transform constraints</h4>
+        <h4 className="perf-subheading">{t("perf.transform_constraints_heading")}</h4>
         <div className="perf-table-wrap">
           <table className="perf-table perf-table-tight">
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Target</th>
-                <th>Bones</th>
-                <th>Mix values</th>
-                <th>Status</th>
+                <th>{t("perf.t_name")}</th>
+                <th>{t("perf.t_target")}</th>
+                <th>{t("perf.t_bones")}</th>
+                <th>{t("perf.t_mix")}</th>
+                <th>{t("perf.t_status")}</th>
               </tr>
             </thead>
             <tbody>
@@ -568,11 +589,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
         </div>
       </section>
 
-      <footer className="performance-footer performance-muted">
-        RI/CI bands map raw runtime metrics (vertices, weights, deform, constraint counts) to labels; they are not identical
-        to Spine Editor. Animations are sampled uniformly in time (~45 Hz, capped) on a cloned skeleton with{" "}
-        <code>Physics.update</code>.
-      </footer>
+      <footer className="performance-footer performance-muted">{t("perf.footer")}</footer>
     </aside>
   );
 }

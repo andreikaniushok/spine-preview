@@ -1,10 +1,13 @@
 import "./App.css";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { AppHeader } from "./components/AppHeader";
 import { ControlPanel } from "./components/ControlPanel";
 import { PerformanceReportPanel } from "./components/PerformanceReportPanel";
+import { useI18n } from "./i18n/useI18n";
 import { useSpinePreview } from "./hooks/useSpinePreview";
 
 function App() {
+  const { t } = useI18n();
   const preview = useSpinePreview();
   const vm = preview.viewModel;
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
@@ -23,6 +26,7 @@ function App() {
 
   return (
     <div className={classes}>
+      <AppHeader theme={vm.theme} onThemeChange={preview.actions.setTheme} />
       <ControlPanel
         models={vm.models}
         activeModel={vm.activeModel}
@@ -33,7 +37,6 @@ function App() {
         selectedSkin={vm.selectedSkin}
         alpha={vm.alpha}
         debugBones={vm.debugBones}
-        theme={vm.theme}
         onModelSelect={preview.actions.selectModel}
         onModelRemove={preview.actions.removeModel}
         onAnimationPlay={preview.actions.playAnimation}
@@ -44,7 +47,6 @@ function App() {
         onSkinChange={preview.actions.setSkin}
         onAlphaChange={preview.actions.setModelAlpha}
         onDebugToggle={preview.actions.toggleDebug}
-        onThemeToggle={preview.actions.setTheme}
         benchmark={vm.benchmark}
         onBenchmarkStart={preview.actions.startBenchmark}
         onBenchmarkStop={preview.actions.stopBenchmark}
@@ -70,16 +72,16 @@ function App() {
       >
         <div className="overlay scene-actions">
           <button type="button" onClick={() => filesInputRef.current?.click()}>
-            Select files
+            {t("scene.select_files")}
           </button>
           <button type="button" onClick={() => folderInputRef.current?.click()}>
-            Select folder
+            {t("scene.select_folder")}
           </button>
           <input
             ref={filesInputRef}
             className="sr-only"
             type="file"
-            aria-label="Select Spine files"
+            aria-label={t("scene.aria_select_files")}
             multiple
             onChange={(event) => {
               const files = event.currentTarget.files;
@@ -93,7 +95,7 @@ function App() {
             ref={folderInputRef}
             className="sr-only"
             type="file"
-            aria-label="Select Spine folder"
+            aria-label={t("scene.aria_select_folder")}
             multiple
             onChange={(event) => {
               const files = event.currentTarget.files;
@@ -107,15 +109,23 @@ function App() {
 
         <div ref={preview.hostRef} className="pixi-host" />
         <div className="overlay metrics">
-          <span>FPS: {vm.metrics.fps.toFixed(0)}</span>
-          <span>Frame: {vm.metrics.frameTimeMs.toFixed(2)} ms</span>
+          <span>
+            {t("scene.fps")}: {vm.metrics.fps.toFixed(0)}
+          </span>
+          <span>
+            {t("scene.frame_ms")}: {vm.metrics.frameTimeMs.toFixed(2)} ms
+          </span>
         </div>
         <div className="notices">
           {vm.notices.map((notice) => (
             <div key={notice.id} className={`notice notice-${notice.level}`}>
-              <span>{notice.message}</span>
-              <button type="button" onClick={() => preview.actions.dismissNotice(notice.id)}>
-                x
+              <span>{t(notice.messageKey, notice.vars)}</span>
+              <button
+                type="button"
+                aria-label={t("common.dismiss")}
+                onClick={() => preview.actions.dismissNotice(notice.id)}
+              >
+                ×
               </button>
             </div>
           ))}
@@ -123,9 +133,9 @@ function App() {
 
         {!vm.activeModel && (
           <div className="overlay drop-hint">
-            Drop Spine files here:
+            {t("scene.drop_title")}
             <br />
-            <code>.json/.skel + .atlas + textures</code>
+            <code>{t("scene.drop_hint_sub")}</code>
           </div>
         )}
       </main>

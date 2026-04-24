@@ -11,6 +11,8 @@ import { attachAtlasRenderPasses, buildAtlasAnalysis } from "../analysis/atlasAn
 import { buildSpinePerformanceReport } from "../analysis/spinePerformanceReport";
 import { summarizeBenchmark } from "../utils/benchmarkStats";
 import type { PerformanceBaseline } from "../types/performanceBaseline";
+import type { MessageKey } from "../i18n/messages";
+import type { MessageVars } from "../i18n/types";
 import type {
   BenchmarkUiState,
   PerformanceSnapshot,
@@ -28,10 +30,11 @@ interface PersistedState {
 
 type NoticeLevel = "success" | "error" | "info";
 
-interface Notice {
+export interface PreviewNotice {
   id: string;
   level: NoticeLevel;
-  message: string;
+  messageKey: MessageKey;
+  vars?: MessageVars;
 }
 
 const rendererBackgroundByTheme = {
@@ -83,7 +86,7 @@ export function useSpinePreview() {
     fps: 0,
     frameTimeMs: 0,
   });
-  const [notices, setNotices] = useState<Notice[]>([]);
+  const [notices, setNotices] = useState<PreviewNotice[]>([]);
   const [benchmark, setBenchmark] = useState<BenchmarkUiState>({ status: "idle" });
   const [performanceBaseline, setPerformanceBaseline] = useState<PerformanceBaseline | null>(null);
   const [atlasLiveTick, setAtlasLiveTick] = useState(0);
@@ -102,9 +105,9 @@ export function useSpinePreview() {
     scene.centerInView(pixi.app.renderer.width, pixi.app.renderer.height);
   }, []);
 
-  const pushNotice = useCallback((level: NoticeLevel, message: string) => {
+  const pushNotice = useCallback((level: NoticeLevel, messageKey: MessageKey, vars?: MessageVars) => {
     const id = crypto.randomUUID();
-    setNotices((old) => [...old, { id, level, message }]);
+    setNotices((old) => [...old, { id, level, messageKey, vars }]);
     window.setTimeout(() => {
       setNotices((old) => old.filter((item) => item.id !== id));
     }, 5500);
@@ -229,30 +232,27 @@ export function useSpinePreview() {
     const animation = animationRef.current;
     const scene = sceneRef.current;
     if (!manager || !animation || !scene) {
-      pushNotice("error", "Renderer is not ready yet. Try again in a second.");
+      pushNotice("error", "notice.renderer_not_ready");
       return;
     }
 
     if (files.length === 0) {
-      pushNotice("info", "No files selected.");
+      pushNotice("info", "notice.no_files");
       return;
     }
 
     if (bundles.length === 0) {
-      pushNotice(
-        "error",
-        "No valid Spine bundle found. Need .json/.skel + .atlas + textures.",
-      );
+      pushNotice("error", "notice.no_valid_bundle");
       return;
     }
 
-    pushNotice("info", `Found ${bundles.length} bundle(s). Loading...`);
+    pushNotice("info", "notice.bundles_loading", { count: bundles.length });
 
     for (const bundle of bundles) {
       try {
         const model = await manager.loadBundle(bundle);
         setModels(manager.models);
-        pushNotice("success", `Loaded "${model.name}" successfully.`);
+        pushNotice("success", "notice.loaded_ok", { name: model.name });
         if (!manager.getActiveModel() || !activeModel) {
           setActiveModel(model);
           animation.bind(model);
@@ -262,7 +262,7 @@ export function useSpinePreview() {
       } catch (error) {
         const details =
           error instanceof Error ? error.message : "Unknown error during bundle parsing.";
-        pushNotice("error", `Failed to load "${bundle.name}": ${details}`);
+        pushNotice("error", "notice.load_failed", { name: bundle.name, details });
       }
     }
   }, [activeModel, pushNotice, centerModelInCanvas]);
@@ -304,11 +304,11 @@ export function useSpinePreview() {
       animation.bind(nextModel);
       centerModelInCanvas(nextModel);
       setSelectedSkin(nextModel.skins[0] ?? "");
-      pushNotice("info", `Removed model. Active: "${nextModel.name}".`);
+      pushNotice("info", "notice.removed_active", { name: nextModel.name });
     } else {
       animation.bind(null);
       setSelectedSkin("");
-      pushNotice("info", "Removed model. No models left.");
+      pushNotice("info", "notice.removed_none");
     }
   }, [pushNotice, centerModelInCanvas]);
 
@@ -362,7 +362,7 @@ export function useSpinePreview() {
   const startBenchmark = useCallback(
     (durationSec: number) => {
       if (!pixiRef.current || !metricsRef.current) {
-        pushNotice("error", "Renderer is not ready yet. Try again in a second.");
+        pushNotice("error", "notice.renderer_not_ready");
         return;
       }
       if (benchmarkRef.current.active) {
@@ -376,7 +376,7 @@ export function useSpinePreview() {
       bench.stopRequested = false;
       benchmarkProgressEmitRef.current = 0;
       setBenchmark({ status: "running", progress: 0 });
-      pushNotice("info", `Benchmark started (${durationSec}s).`);
+      pushNotice("info", "notice.benchmark_started", { seconds: durationSec });
     },
     [pushNotice],
   );
@@ -394,7 +394,7 @@ export function useSpinePreview() {
 
   const capturePerformanceBaseline = useCallback(() => {
     if (!activeModel || !performanceReport) {
-      pushNotice("error", "No active skeleton to save as baseline A.");
+      pushNotice("error", "notice.no_baseline_skeleton");
       return;
     }
     setPerformanceBaseline({
@@ -402,10 +402,7 @@ export function useSpinePreview() {
       modelName: activeModel.name,
       report: performanceReport,
     });
-    pushNotice(
-      "info",
-      `Baseline A captured: "${activeModel.name}". Switch the active model to compare as B.`,
-    );
+    pushNotice("info", "notice.baseline_captured", { name: activeModel.name });
   }, [activeModel, performanceReport, pushNotice]);
 
   const clearPerformanceBaseline = useCallback(() => {

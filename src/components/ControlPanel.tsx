@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import type { AtlasAnalysisReport } from "../analysis/atlasAnalysis";
+import { useI18n } from "../i18n/useI18n";
 import type { BenchmarkUiState, PlaybackMode, SpineModel } from "../types/spine";
 
 interface ControlPanelProps {
@@ -12,7 +13,6 @@ interface ControlPanelProps {
   selectedSkin: string;
   alpha: number;
   debugBones: boolean;
-  theme: "dark" | "light";
   onModelSelect: (id: string) => void;
   onModelRemove: (id: string) => void;
   onAnimationPlay: (name: string) => void;
@@ -23,7 +23,6 @@ interface ControlPanelProps {
   onSkinChange: (name: string) => void;
   onAlphaChange: (value: number) => void;
   onDebugToggle: (value: boolean) => void;
-  onThemeToggle: (value: "dark" | "light") => void;
   benchmark: BenchmarkUiState;
   onBenchmarkStart: (durationSec: number) => void;
   onBenchmarkStop: () => void;
@@ -45,7 +44,6 @@ export function ControlPanel(props: ControlPanelProps) {
     selectedSkin,
     alpha,
     debugBones,
-    theme,
     onModelSelect,
     onModelRemove,
     onAnimationPlay,
@@ -56,7 +54,6 @@ export function ControlPanel(props: ControlPanelProps) {
     onSkinChange,
     onAlphaChange,
     onDebugToggle,
-    onThemeToggle,
     benchmark,
     onBenchmarkStart,
     onBenchmarkStop,
@@ -64,6 +61,7 @@ export function ControlPanel(props: ControlPanelProps) {
     atlasReport,
   } = props;
 
+  const { t } = useI18n();
   const [benchmarkDurationSec, setBenchmarkDurationSec] = useState<number>(5);
   const [assetsRegionsOpen, setAssetsRegionsOpen] = useState(false);
   const isBenchmarkRunning = benchmark.status === "running";
@@ -78,17 +76,17 @@ export function ControlPanel(props: ControlPanelProps) {
 
   return (
     <aside className="control-panel">
-      <h1>Spine Preview</h1>
+      <h1>{t("control.title")}</h1>
 
       <section>
-        <h2>Models</h2>
+        <h2>{t("control.models")}</h2>
         <div className="row model-row">
           <select
-            aria-label="Select model"
+            aria-label={t("control.select_model")}
             value={activeModel?.id ?? ""}
             onChange={(e) => onModelSelect(e.target.value)}
           >
-            <option value="">Select model</option>
+            <option value="">{t("control.select_model")}</option>
             {models.map((model) => (
               <option key={model.id} value={model.id}>
                 {model.name}
@@ -100,53 +98,52 @@ export function ControlPanel(props: ControlPanelProps) {
             disabled={!activeModel}
             onClick={() => activeModel && onModelRemove(activeModel.id)}
           >
-            Delete
+            {t("control.delete_model")}
           </button>
         </div>
       </section>
 
       <section className="assets-section">
-        <h2>Assets</h2>
+        <h2>{t("control.assets")}</h2>
         {!activeModel ? (
-          <p className="hint">Load a model to see skeleton and atlas files.</p>
+          <p className="hint">{t("control.assets_load_hint")}</p>
         ) : (
           <>
             <div className="assets-files">
               <div className="assets-file-row">
-                <span className="assets-label">Skeleton</span>
+                <span className="assets-label">{t("control.sk_label")}</span>
                 <code className="assets-path">{activeModel.skeletonFileName}</code>
               </div>
               <div className="assets-file-row">
-                <span className="assets-label">Atlas</span>
+                <span className="assets-label">{t("control.atlas_label")}</span>
                 <code className="assets-path">{activeModel.atlasFileName}</code>
               </div>
             </div>
             {atlasReport?.parseError ? (
-              <p className="assets-parse-error">Atlas: {atlasReport.parseError}</p>
+              <p className="assets-parse-error">
+                {t("control.atlas_parse_prefix")} {atlasReport.parseError}
+              </p>
             ) : atlasReport ? (
               <>
                 <dl className="assets-stats-grid">
                   <div>
-                    <dt>Pages</dt>
+                    <dt>{t("control.pages")}</dt>
                     <dd>{atlasReport.totalPages}</dd>
                   </div>
                   <div>
-                    <dt>Regions</dt>
+                    <dt>{t("control.regions")}</dt>
                     <dd>{atlasReport.totalRegions}</dd>
                   </div>
                   <div>
-                    <dt>Draw calls</dt>
+                    <dt>{t("control.draw_calls")}</dt>
                     <dd>{atlasReport.renderPasses?.estimatedDrawCalls ?? "—"}</dd>
                   </div>
                   <div>
-                    <dt>Page switches</dt>
+                    <dt>{t("control.page_switches")}</dt>
                     <dd>{atlasReport.renderPasses?.texturePageSwitches ?? "—"}</dd>
                   </div>
                 </dl>
-                <p className="assets-stats-hint">
-                  Draw calls and page switches follow the current pose; they are estimated from draw order (atlas page and
-                  blend mode).
-                </p>
+                <p className="assets-stats-hint">{t("control.assets_stats_hint")}</p>
                 {assetsRegionsOpen ? (
                   <button
                     type="button"
@@ -154,7 +151,7 @@ export function ControlPanel(props: ControlPanelProps) {
                     onClick={() => setAssetsRegionsOpen((o) => !o)}
                     aria-expanded="true"
                   >
-                    Hide atlas regions
+                    {t("control.hide_regions")}
                   </button>
                 ) : (
                   <button
@@ -163,7 +160,7 @@ export function ControlPanel(props: ControlPanelProps) {
                     onClick={() => setAssetsRegionsOpen((o) => !o)}
                     aria-expanded="false"
                   >
-                    Show atlas regions ({atlasReport.totalRegions})
+                    {t("control.show_regions", { count: atlasReport.totalRegions })}
                   </button>
                 )}
                 {assetsRegionsOpen && (
@@ -174,20 +171,24 @@ export function ControlPanel(props: ControlPanelProps) {
                       </span>
                     ))}
                     {atlasReport.totalRegions > regionPreview.length && (
-                      <span className="hint">… and {atlasReport.totalRegions - regionPreview.length} more</span>
+                      <span className="hint">
+                        {t("control.regions_more", {
+                          count: atlasReport.totalRegions - regionPreview.length,
+                        })}
+                      </span>
                     )}
                   </div>
                 )}
               </>
             ) : (
-              <p className="hint">No atlas data for this model.</p>
+              <p className="hint">{t("control.no_atlas_data")}</p>
             )}
           </>
         )}
       </section>
 
       <section>
-        <h2>Animations</h2>
+        <h2>{t("control.animations")}</h2>
         <div className="scroll-list">
           {activeModel?.animations.map((name) => (
             <button
@@ -197,30 +198,30 @@ export function ControlPanel(props: ControlPanelProps) {
             >
               {name}
             </button>
-          )) ?? <span className="hint">No animation loaded</span>}
+          )) ?? <span className="hint">{t("control.no_animations")}</span>}
         </div>
       </section>
 
       <section>
-        <h2>Playback</h2>
+        <h2>{t("control.playback")}</h2>
         <div className="row">
-          <button onClick={onPauseToggle}>{paused ? "Play" : "Pause"}</button>
-          <button onClick={onReset}>Reset</button>
+          <button onClick={onPauseToggle}>{paused ? t("control.play") : t("control.pause")}</button>
+          <button onClick={onReset}>{t("control.reset")}</button>
         </div>
         <div className="row">
-          <label>Mode</label>
+          <label>{t("control.mode")}</label>
           <select
-            aria-label="Playback mode"
+            aria-label={t("control.mode")}
             value={mode}
             onChange={(e) => onModeChange(e.target.value as PlaybackMode)}
           >
-            <option value="loop">Loop</option>
-            <option value="once">Once</option>
+            <option value="loop">{t("control.loop")}</option>
+            <option value="once">{t("control.once")}</option>
           </select>
         </div>
         <div className="row">
-          <label>Speed</label>
-          <select aria-label="Playback speed" value={speed} onChange={(e) => onSpeedChange(Number(e.target.value))}>
+          <label>{t("control.speed")}</label>
+          <select aria-label={t("control.speed")} value={speed} onChange={(e) => onSpeedChange(Number(e.target.value))}>
             {speedPreset.map((item) => (
               <option key={item} value={item}>
                 {item}x
@@ -231,22 +232,22 @@ export function ControlPanel(props: ControlPanelProps) {
       </section>
 
       <section>
-        <h2>Appearance</h2>
+        <h2>{t("control.appearance")}</h2>
         <div className="row">
-          <label>Skin</label>
-          <select aria-label="Skin selector" value={selectedSkin} onChange={(e) => onSkinChange(e.target.value)}>
+          <label>{t("control.skin")}</label>
+          <select aria-label={t("control.skin")} value={selectedSkin} onChange={(e) => onSkinChange(e.target.value)}>
             {activeModel?.skins.map((skinName) => (
               <option key={skinName} value={skinName}>
                 {skinName}
               </option>
-            )) ?? <option value="">Default</option>}
+            )) ?? <option value="">{t("control.default_skin")}</option>}
           </select>
         </div>
         <div className="row">
-          <label>Alpha</label>
+          <label>{t("control.alpha")}</label>
           <input
             type="range"
-            aria-label="Model alpha"
+            aria-label={t("control.alpha")}
             min="0.2"
             max="1"
             step="0.05"
@@ -255,10 +256,10 @@ export function ControlPanel(props: ControlPanelProps) {
           />
         </div>
         <div className="row checkbox-row">
-          <label>Debug bones</label>
+          <label>{t("control.debug_bones")}</label>
           <input
             type="checkbox"
-            aria-label="Toggle debug bones"
+            aria-label={t("control.debug_bones")}
             checked={debugBones}
             onChange={(e) => onDebugToggle(e.target.checked)}
           />
@@ -266,15 +267,12 @@ export function ControlPanel(props: ControlPanelProps) {
       </section>
 
       <section className="benchmark-section">
-        <h2>Benchmark</h2>
-        <p className="benchmark-hint">
-          Records frame times from the Pixi ticker for the chosen duration. Mean FPS is derived from
-          average frame time.
-        </p>
+        <h2>{t("control.benchmark")}</h2>
+        <p className="benchmark-hint">{t("control.benchmark_hint")}</p>
         <div className="row">
-          <label>Duration</label>
+          <label>{t("control.duration")}</label>
           <select
-            aria-label="Benchmark duration"
+            aria-label={t("control.duration")}
             value={benchmarkDurationSec}
             disabled={isBenchmarkRunning}
             onChange={(e) => setBenchmarkDurationSec(Number(e.target.value))}
@@ -289,11 +287,11 @@ export function ControlPanel(props: ControlPanelProps) {
         <div className="row benchmark-actions">
           {!isBenchmarkRunning ? (
             <button type="button" onClick={() => onBenchmarkStart(benchmarkDurationSec)}>
-              Start
+              {t("control.start")}
             </button>
           ) : (
             <button type="button" onClick={onBenchmarkStop}>
-              Stop early
+              {t("control.stop_early")}
             </button>
           )}
         </div>
@@ -306,7 +304,7 @@ export function ControlPanel(props: ControlPanelProps) {
               />
             </div>
             <span className="benchmark-progress-label">
-              Recording… {Math.round(benchmark.progress * 100)}%
+              {t("control.recording", { pct: Math.round(benchmark.progress * 100) })}
             </span>
           </div>
         )}
@@ -314,35 +312,35 @@ export function ControlPanel(props: ControlPanelProps) {
           <div className="benchmark-results">
             <dl className="benchmark-stats">
               <div>
-                <dt>Frames</dt>
+                <dt>{t("control.frames")}</dt>
                 <dd>{benchmark.result.frameCount}</dd>
               </div>
               <div>
-                <dt>Wall time</dt>
+                <dt>{t("control.wall_time")}</dt>
                 <dd>{(benchmark.result.wallDurationMs / 1000).toFixed(2)} s</dd>
               </div>
               <div>
-                <dt>Mean FPS</dt>
+                <dt>{t("control.mean_fps")}</dt>
                 <dd>{benchmark.result.meanFps.toFixed(1)}</dd>
               </div>
               <div>
-                <dt>Frame ms (avg)</dt>
+                <dt>{t("control.frame_ms_avg")}</dt>
                 <dd>{benchmark.result.frameTimeMs.mean.toFixed(2)}</dd>
               </div>
               <div>
-                <dt>Frame ms (p50)</dt>
+                <dt>{t("control.frame_ms_p50")}</dt>
                 <dd>{benchmark.result.frameTimeMs.p50.toFixed(2)}</dd>
               </div>
               <div>
-                <dt>Frame ms (p95)</dt>
+                <dt>{t("control.frame_ms_p95")}</dt>
                 <dd>{benchmark.result.frameTimeMs.p95.toFixed(2)}</dd>
               </div>
               <div>
-                <dt>Frame ms (p99)</dt>
+                <dt>{t("control.frame_ms_p99")}</dt>
                 <dd>{benchmark.result.frameTimeMs.p99.toFixed(2)}</dd>
               </div>
               <div>
-                <dt>Frame ms (min–max)</dt>
+                <dt>{t("control.frame_ms_minmax")}</dt>
                 <dd>
                   {benchmark.result.frameTimeMs.min.toFixed(2)} –{" "}
                   {benchmark.result.frameTimeMs.max.toFixed(2)}
@@ -350,31 +348,12 @@ export function ControlPanel(props: ControlPanelProps) {
               </div>
             </dl>
             <button type="button" className="benchmark-clear" onClick={onBenchmarkClear}>
-              Clear results
+              {t("control.clear_results")}
             </button>
           </div>
         )}
       </section>
 
-      <section>
-        <h2>Settings</h2>
-        <div className="row checkbox-row">
-          <label htmlFor="theme-switch">White theme</label>
-          <label className="theme-toggle" htmlFor="theme-switch">
-            <input
-              id="theme-switch"
-              className="theme-toggle-input"
-              type="checkbox"
-              aria-label="Toggle light theme"
-              checked={theme === "light"}
-              onChange={(event) => onThemeToggle(event.target.checked ? "light" : "dark")}
-            />
-            <span className="theme-toggle-track">
-              <span className="theme-toggle-thumb" />
-            </span>
-          </label>
-        </div>
-      </section>
     </aside>
   );
 }
