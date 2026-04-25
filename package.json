@@ -2,6 +2,7 @@
   "name": "spine-preview",
   "private": true,
   "version": "0.0.0",
+  "packageManager": "yarn@1.22.21",
   "type": "module",
   "scripts": {
     "dev": "vite",

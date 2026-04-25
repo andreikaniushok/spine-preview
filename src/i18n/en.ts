@@ -3,7 +3,7 @@ export const enMessages = {
   "common.no": "No",
   "common.dismiss": "Dismiss",
 
-  "header.brand": "Spine Lab",
+  "header.brand": "Spine Preview",
   "header.theme_aria": "Toggle light theme",
   "header.theme_light": "Light",
   "header.theme_dark": "Dark",

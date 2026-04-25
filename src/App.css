@@ -1,6 +1,9 @@
 .app {
   display: grid;
-  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(240px, 380px);
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(
+      240px,
+      380px
+    );
   grid-template-rows: auto 1fr;
   width: 100%;
   min-height: 100dvh;
@@ -34,6 +37,12 @@
   font-size: 17px;
   font-weight: 650;
   letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #6a1bb1 0%, #1f4fd6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 0.45px rgba(255, 255, 255, 0.45);
 }
 
 .app-header-actions {
@@ -396,7 +405,10 @@
   padding: 6px 8px;
   cursor: pointer;
   font: inherit;
-  transition: background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .control-panel button:hover:not(:disabled) {
@@ -425,7 +437,9 @@
   padding: 6px 32px 6px 10px;
   cursor: pointer;
   font: inherit;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .control-panel select:hover {
@@ -508,7 +522,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .control-panel .theme-toggle:hover .theme-toggle-track,
@@ -531,8 +547,14 @@
   border-color: var(--accent);
 }
 
-.control-panel .theme-toggle-input:checked + .theme-toggle-track .theme-toggle-thumb,
-.app-header .theme-toggle-input:checked + .theme-toggle-track .theme-toggle-thumb {
+.control-panel
+  .theme-toggle-input:checked
+  + .theme-toggle-track
+  .theme-toggle-thumb,
+.app-header
+  .theme-toggle-input:checked
+  + .theme-toggle-track
+  .theme-toggle-thumb {
   transform: translateX(20px);
   background: #ffffff;
 }
@@ -778,7 +800,9 @@
   padding: 6px 10px;
   cursor: pointer;
   font: inherit;
-  transition: background-color 0.15s ease, border-color 0.15s ease;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .scene-actions button:hover {

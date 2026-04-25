@@ -5,7 +5,7 @@ export const plMessages: Record<MessageKey, string> = {
   "common.no": "Nie",
   "common.dismiss": "Zamknij",
 
-  "header.brand": "Spine Lab",
+  "header.brand": "Spine Preview",
   "header.theme_aria": "Przełącz jasny motyw",
   "header.theme_light": "Jasny",
   "header.theme_dark": "Ciemny",

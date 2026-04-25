@@ -76,8 +76,6 @@ export function ControlPanel(props: ControlPanelProps) {
 
   return (
     <aside className="control-panel">
-      <h1>{t("control.title")}</h1>
-
       <section>
         <h2>{t("control.models")}</h2>
         <div className="row model-row">
