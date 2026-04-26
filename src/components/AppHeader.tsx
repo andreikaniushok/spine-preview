@@ -6,6 +6,8 @@ interface AppHeaderProps {
   onThemeChange: (theme: "dark" | "light") => void;
   analyticsVisible: boolean;
   onAnalyticsVisibleChange: (visible: boolean) => void;
+  metricsVisible: boolean;
+  onMetricsVisibleChange: (visible: boolean) => void;
 }
 
 const locales: Locale[] = ["en", "pl", "ru"];
@@ -21,6 +23,8 @@ export function AppHeader({
   onThemeChange,
   analyticsVisible,
   onAnalyticsVisibleChange,
+  metricsVisible,
+  onMetricsVisibleChange,
 }: AppHeaderProps) {
   const { locale, setLocale, t } = useI18n();
 
@@ -77,6 +81,25 @@ export function AppHeader({
               aria-labelledby="analytics-header-label"
               checked={analyticsVisible}
               onChange={(e) => onAnalyticsVisibleChange(e.target.checked)}
+            />
+            <span className="theme-toggle-track">
+              <span className="theme-toggle-thumb" />
+            </span>
+          </label>
+        </div>
+        <div className="app-header-field app-header-theme">
+          <span className="app-header-label" id="metrics-header-label">
+            {metricsVisible ? t("header.metrics_on") : t("header.metrics_off")}
+          </span>
+          <label className="theme-toggle" htmlFor="app-metrics-switch">
+            <input
+              id="app-metrics-switch"
+              className="theme-toggle-input"
+              type="checkbox"
+              aria-label={t("header.metrics_aria")}
+              aria-labelledby="metrics-header-label"
+              checked={metricsVisible}
+              onChange={(e) => onMetricsVisibleChange(e.target.checked)}
             />
             <span className="theme-toggle-track">
               <span className="theme-toggle-thumb" />

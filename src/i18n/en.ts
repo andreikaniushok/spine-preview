@@ -14,6 +14,9 @@ export const enMessages = {
   "header.analytics_aria": "Toggle performance analysis panel",
   "header.analytics_on": "Analytics",
   "header.analytics_off": "Analytics",
+  "header.metrics_aria": "Toggle FPS and frame metrics overlay",
+  "header.metrics_on": "Metrics",
+  "header.metrics_off": "Metrics",
 
   "scene.select_files": "Select files",
   "scene.select_folder": "Select folder",

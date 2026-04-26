@@ -12,6 +12,7 @@ function App() {
   const vm = preview.viewModel;
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
   const [isAnalyticsVisible, setIsAnalyticsVisible] = useState(false);
+  const [isMetricsVisible, setIsMetricsVisible] = useState(true);
   const filesInputRef = useRef<HTMLInputElement | null>(null);
   const folderInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -35,6 +36,8 @@ function App() {
         onThemeChange={preview.actions.setTheme}
         analyticsVisible={isAnalyticsVisible}
         onAnalyticsVisibleChange={setIsAnalyticsVisible}
+        metricsVisible={isMetricsVisible}
+        onMetricsVisibleChange={setIsMetricsVisible}
       />
       <ControlPanel
         models={vm.models}
@@ -112,14 +115,16 @@ function App() {
         </div>
 
         <div ref={preview.hostRef} className="pixi-host" />
-        <div className="overlay metrics">
-          <span>
-            {t("scene.fps")}: {vm.metrics.fps.toFixed(0)}
-          </span>
-          <span>
-            {t("scene.frame_ms")}: {vm.metrics.frameTimeMs.toFixed(2)} ms
-          </span>
-        </div>
+        {isMetricsVisible && (
+          <div className="overlay metrics">
+            <span>
+              {t("scene.fps")}: {vm.metrics.fps.toFixed(0)}
+            </span>
+            <span>
+              {t("scene.frame_ms")}: {vm.metrics.frameTimeMs.toFixed(2)} ms
+            </span>
+          </div>
+        )}
         <div className="notices">
           {vm.notices.map((notice) => (
             <div key={notice.id} className={`notice notice-${notice.level}`}>

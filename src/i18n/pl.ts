@@ -16,6 +16,9 @@ export const plMessages: Record<MessageKey, string> = {
   "header.analytics_aria": "Przełącz panel analizy wydajności",
   "header.analytics_on": "Analityka",
   "header.analytics_off": "Analityka",
+  "header.metrics_aria": "Przełącz nakładkę metryk FPS i czasu klatki",
+  "header.metrics_on": "Metryki",
+  "header.metrics_off": "Metryki",
 
   "scene.select_files": "Wybierz pliki",
   "scene.select_folder": "Wybierz folder",

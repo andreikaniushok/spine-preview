@@ -16,6 +16,9 @@ export const ruMessages: Record<MessageKey, string> = {
   "header.analytics_aria": "Переключить панель анализа производительности",
   "header.analytics_on": "Аналитика",
   "header.analytics_off": "Аналитика",
+  "header.metrics_aria": "Переключить оверлей метрик FPS и времени кадра",
+  "header.metrics_on": "Метрики",
+  "header.metrics_off": "Метрики",
 
   "scene.select_files": "Выбрать файлы",
   "scene.select_folder": "Выбрать папку",

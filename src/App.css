@@ -7,8 +7,9 @@
   grid-template-rows: auto 1fr;
   width: 100%;
   min-height: 100dvh;
+  height: 100dvh;
   background: var(--bg);
-  overflow-x: clip;
+  overflow: hidden;
 }
 
 .app.app-analytics-hidden {
@@ -106,7 +107,8 @@
   color: var(--text);
   padding: 12px 14px 20px;
   overflow-y: auto;
-  max-height: 100dvh;
+  min-height: 0;
+  max-height: none;
   font-size: 13px;
   line-height: 1.45;
 }
@@ -464,6 +466,8 @@
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .control-panel h1 {
