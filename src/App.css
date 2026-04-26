@@ -584,6 +584,12 @@
   min-width: 0;
 }
 
+.control-panel .row select,
+.control-panel .row input[type="range"] {
+  width: auto;
+  flex: 1 1 auto;
+}
+
 .control-panel .model-row select {
   flex: 1;
 }
