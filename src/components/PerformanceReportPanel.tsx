@@ -69,16 +69,9 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
   } = props;
   const { t } = useI18n();
   const [benchmarkDurationSec, setBenchmarkDurationSec] = useState<number>(5);
-  const [assetsRegionsOpen, setAssetsRegionsOpen] = useState(false);
+  const [largestRegionsOpen, setLargestRegionsOpen] = useState(false);
   const isBenchmarkRunning = benchmark.status === "running";
 
-  const regionPreview = useMemo(() => {
-    const names = atlasReport?.regionNames;
-    if (!names?.length) {
-      return [];
-    }
-    return names.slice(0, 500);
-  }, [atlasReport?.regionNames]);
   const atlasPagesRows = useMemo(
     () =>
       atlasReport?.pages.map((p) => (
@@ -273,11 +266,45 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
                     </div>
                   </dl>
                   <p className="assets-stats-hint">{t("control.assets_stats_hint")}</p>
-                  {assetsRegionsOpen ? (
+                  <h4 className="perf-subheading">{t("perf.pages_table")}</h4>
+                  <div className="perf-table-wrap">
+                    <table className="perf-table">
+                      <thead>
+                        <tr>
+                          <th>{t("perf.texture")}</th>
+                          <th>{t("perf.size")}</th>
+                          <th>{t("perf.regions")}</th>
+                          <th>{t("perf.utilization")}</th>
+                          <th>{t("perf.filter")}</th>
+                          <th>{t("perf.wrap_uv")}</th>
+                          <th>{t("perf.pma")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>{atlasPagesRows}</tbody>
+                    </table>
+                  </div>
+                  {atlasReport.linkage && (
+                    <>
+                      <h4 className="perf-subheading">{t("perf.atlas_vs_skins")}</h4>
+                      <div className="perf-kv-grid">
+                        <span className="perf-k">{t("perf.distinct_paths")}</span>
+                        <span className="perf-v">{atlasReport.linkage.attachmentTexturePaths}</span>
+                        <span className="perf-k">{t("perf.resolved_in_atlas")}</span>
+                        <span className="perf-v">{atlasReport.linkage.resolvedInAtlas}</span>
+                        <span className="perf-k">{t("perf.missing_in_atlas")}</span>
+                        <span className="perf-v">{atlasReport.linkage.missingInAtlas}</span>
+                        <span className="perf-k">{t("perf.unused_regions")}</span>
+                        <span className="perf-v">{atlasReport.linkage.orphanRegions}</span>
+                      </div>
+                      <p className="performance-muted">{t("perf.atlas_match_hint")}</p>
+                    </>
+                  )}
+                  <h4 className="perf-subheading">{t("perf.largest_regions")}</h4>
+                  {largestRegionsOpen ? (
                     <button
                       type="button"
                       className="assets-toggle"
-                      onClick={() => setAssetsRegionsOpen((o) => !o)}
+                      onClick={() => setLargestRegionsOpen((open) => !open)}
                       aria-expanded="true"
                     >
                       {t("control.hide_regions")}
@@ -286,26 +313,28 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
                     <button
                       type="button"
                       className="assets-toggle"
-                      onClick={() => setAssetsRegionsOpen((o) => !o)}
+                      onClick={() => setLargestRegionsOpen((open) => !open)}
                       aria-expanded="false"
                     >
-                      {t("control.show_regions", { count: atlasReport.totalRegions })}
+                      {t("control.show_regions", { count: 10 })}
                     </button>
                   )}
-                  {assetsRegionsOpen && (
-                    <div className="scroll-list assets-region-list" role="list">
-                      {regionPreview.map((name) => (
-                        <span key={name} className="assets-region-chip" role="listitem">
-                          {name}
-                        </span>
-                      ))}
-                      {atlasReport.totalRegions > regionPreview.length && (
-                        <span className="performance-muted">
-                          {t("control.regions_more", {
-                            count: atlasReport.totalRegions - regionPreview.length,
-                          })}
-                        </span>
-                      )}
+                  {largestRegionsOpen && (
+                    <div className="perf-table-wrap">
+                      <table className="perf-table">
+                        <thead>
+                          <tr>
+                            <th>{t("perf.region_col")}</th>
+                            <th>{t("perf.page_col")}</th>
+                            <th>{t("perf.xy_col")}</th>
+                            <th>{t("perf.size_col")}</th>
+                            <th>{t("perf.pixels_col")}</th>
+                            <th>{t("perf.rot_col")}</th>
+                            <th>{t("perf.original_col")}</th>
+                          </tr>
+                        </thead>
+                        <tbody>{largestRegionsRows}</tbody>
+                      </table>
                     </div>
                   )}
                 </>
@@ -533,11 +562,45 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
                   </div>
                 </dl>
                 <p className="assets-stats-hint">{t("control.assets_stats_hint")}</p>
-                {assetsRegionsOpen ? (
+                <h4 className="perf-subheading">{t("perf.pages_table")}</h4>
+                <div className="perf-table-wrap">
+                  <table className="perf-table">
+                    <thead>
+                      <tr>
+                        <th>{t("perf.texture")}</th>
+                        <th>{t("perf.size")}</th>
+                        <th>{t("perf.regions")}</th>
+                        <th>{t("perf.utilization")}</th>
+                        <th>{t("perf.filter")}</th>
+                        <th>{t("perf.wrap_uv")}</th>
+                        <th>{t("perf.pma")}</th>
+                      </tr>
+                    </thead>
+                    <tbody>{atlasPagesRows}</tbody>
+                  </table>
+                </div>
+                {atlasReport.linkage && (
+                  <>
+                    <h4 className="perf-subheading">{t("perf.atlas_vs_skins")}</h4>
+                    <div className="perf-kv-grid">
+                      <span className="perf-k">{t("perf.distinct_paths")}</span>
+                      <span className="perf-v">{atlasReport.linkage.attachmentTexturePaths}</span>
+                      <span className="perf-k">{t("perf.resolved_in_atlas")}</span>
+                      <span className="perf-v">{atlasReport.linkage.resolvedInAtlas}</span>
+                      <span className="perf-k">{t("perf.missing_in_atlas")}</span>
+                      <span className="perf-v">{atlasReport.linkage.missingInAtlas}</span>
+                      <span className="perf-k">{t("perf.unused_regions")}</span>
+                      <span className="perf-v">{atlasReport.linkage.orphanRegions}</span>
+                    </div>
+                    <p className="performance-muted">{t("perf.atlas_match_hint")}</p>
+                  </>
+                )}
+                <h4 className="perf-subheading">{t("perf.largest_regions")}</h4>
+                {largestRegionsOpen ? (
                   <button
                     type="button"
                     className="assets-toggle"
-                    onClick={() => setAssetsRegionsOpen((o) => !o)}
+                    onClick={() => setLargestRegionsOpen((open) => !open)}
                     aria-expanded="true"
                   >
                     {t("control.hide_regions")}
@@ -546,26 +609,28 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
                   <button
                     type="button"
                     className="assets-toggle"
-                    onClick={() => setAssetsRegionsOpen((o) => !o)}
+                    onClick={() => setLargestRegionsOpen((open) => !open)}
                     aria-expanded="false"
                   >
-                    {t("control.show_regions", { count: atlasReport.totalRegions })}
+                    {t("control.show_regions", { count: 10 })}
                   </button>
                 )}
-                {assetsRegionsOpen && (
-                  <div className="scroll-list assets-region-list" role="list">
-                    {regionPreview.map((name) => (
-                      <span key={name} className="assets-region-chip" role="listitem">
-                        {name}
-                      </span>
-                    ))}
-                    {atlasReport.totalRegions > regionPreview.length && (
-                      <span className="performance-muted">
-                        {t("control.regions_more", {
-                          count: atlasReport.totalRegions - regionPreview.length,
-                        })}
-                      </span>
-                    )}
+                {largestRegionsOpen && (
+                  <div className="perf-table-wrap">
+                    <table className="perf-table">
+                      <thead>
+                        <tr>
+                          <th>{t("perf.region_col")}</th>
+                          <th>{t("perf.page_col")}</th>
+                          <th>{t("perf.xy_col")}</th>
+                          <th>{t("perf.size_col")}</th>
+                          <th>{t("perf.pixels_col")}</th>
+                          <th>{t("perf.rot_col")}</th>
+                          <th>{t("perf.original_col")}</th>
+                        </tr>
+                      </thead>
+                      <tbody>{largestRegionsRows}</tbody>
+                    </table>
                   </div>
                 )}
               </>
@@ -663,107 +728,6 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
           </div>
         )}
       </section>
-
-      {atlasReport && (
-        <section className="perf-section">
-          <h3>{t("perf.texture_atlas")}</h3>
-          <p className="performance-muted">
-            {t("perf.atlas_parsed_lead")} <code>TextureAtlas</code> {t("perf.atlas_parsed_from")}{" "}
-            <strong>{atlasReport.atlasFileName}</strong>.
-          </p>
-          {atlasReport.parseError ? (
-            <p className="performance-atlas-error">
-              {t("perf.parse_error")} {atlasReport.parseError}
-            </p>
-          ) : (
-            <>
-              <h4 className="perf-subheading">{t("perf.atlas_summary")}</h4>
-              <div className="perf-kv-grid">
-                <span className="perf-k">{t("control.pages")}</span>
-                <span className="perf-v">{atlasReport.totalPages}</span>
-                <span className="perf-k">{t("control.regions")}</span>
-                <span className="perf-v">{atlasReport.totalRegions}</span>
-                {atlasReport.renderPasses ? (
-                  <>
-                    <span className="perf-k">{t("control.draw_calls")}</span>
-                    <span className="perf-v">{atlasReport.renderPasses.estimatedDrawCalls}</span>
-                    <span className="perf-k">{t("control.page_switches")}</span>
-                    <span className="perf-v">{atlasReport.renderPasses.texturePageSwitches}</span>
-                  </>
-                ) : null}
-              </div>
-              {atlasReport.renderPasses && (
-                <p className="performance-muted">{t("perf.atlas_draw_hint")}</p>
-              )}
-              <div className="perf-kv-grid">
-                <span className="perf-k">{t("perf.page_pixels")}</span>
-                <span className="perf-v">{atlasReport.totalPagePixels.toLocaleString()}</span>
-                <span className="perf-k">{t("perf.packed_rect_pixels")}</span>
-                <span className="perf-v">{atlasReport.totalPackedPixels.toLocaleString()}</span>
-                <span className="perf-k">{t("perf.utilization_packed")}</span>
-                <span className="perf-v">{atlasReport.overallUtilizationPercent.toFixed(1)}%</span>
-              </div>
-
-              <h4 className="perf-subheading">{t("perf.pages_table")}</h4>
-              <div className="perf-table-wrap">
-                <table className="perf-table">
-                  <thead>
-                    <tr>
-                      <th>{t("perf.texture")}</th>
-                      <th>{t("perf.size")}</th>
-                      <th>{t("perf.regions")}</th>
-                      <th>{t("perf.utilization")}</th>
-                      <th>{t("perf.filter")}</th>
-                      <th>{t("perf.wrap_uv")}</th>
-                      <th>{t("perf.pma")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {atlasPagesRows}
-                  </tbody>
-                </table>
-              </div>
-
-              {atlasReport.linkage && (
-                <>
-                  <h4 className="perf-subheading">{t("perf.atlas_vs_skins")}</h4>
-                  <div className="perf-kv-grid">
-                    <span className="perf-k">{t("perf.distinct_paths")}</span>
-                    <span className="perf-v">{atlasReport.linkage.attachmentTexturePaths}</span>
-                    <span className="perf-k">{t("perf.resolved_in_atlas")}</span>
-                    <span className="perf-v">{atlasReport.linkage.resolvedInAtlas}</span>
-                    <span className="perf-k">{t("perf.missing_in_atlas")}</span>
-                    <span className="perf-v">{atlasReport.linkage.missingInAtlas}</span>
-                    <span className="perf-k">{t("perf.unused_regions")}</span>
-                    <span className="perf-v">{atlasReport.linkage.orphanRegions}</span>
-                  </div>
-                  <p className="performance-muted">{t("perf.atlas_match_hint")}</p>
-                </>
-              )}
-
-              <h4 className="perf-subheading">{t("perf.largest_regions")}</h4>
-              <div className="perf-table-wrap">
-                <table className="perf-table">
-                  <thead>
-                    <tr>
-                      <th>{t("perf.region_col")}</th>
-                      <th>{t("perf.page_col")}</th>
-                      <th>{t("perf.xy_col")}</th>
-                      <th>{t("perf.size_col")}</th>
-                      <th>{t("perf.pixels_col")}</th>
-                      <th>{t("perf.rot_col")}</th>
-                      <th>{t("perf.original_col")}</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {largestRegionsRows}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
-        </section>
-      )}
 
       <section className="perf-section">
         <h3>{t("perf.rendering_impact")}</h3>

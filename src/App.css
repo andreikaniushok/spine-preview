@@ -1,8 +1,8 @@
 .app {
   display: grid;
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr) minmax(
-      240px,
-      380px
+      288px,
+      600px
     );
   grid-template-rows: auto 1fr;
   width: 100%;
