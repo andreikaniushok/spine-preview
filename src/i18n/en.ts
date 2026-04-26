@@ -11,6 +11,9 @@ export const enMessages = {
   "header.lang_en": "English",
   "header.lang_pl": "Polski",
   "header.lang_ru": "Русский",
+  "header.analytics_aria": "Toggle performance analysis panel",
+  "header.analytics_on": "Analytics",
+  "header.analytics_off": "Analytics",
 
   "scene.select_files": "Select files",
   "scene.select_folder": "Select folder",

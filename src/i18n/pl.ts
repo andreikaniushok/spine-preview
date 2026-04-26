@@ -13,6 +13,9 @@ export const plMessages: Record<MessageKey, string> = {
   "header.lang_en": "English",
   "header.lang_pl": "Polski",
   "header.lang_ru": "Русский",
+  "header.analytics_aria": "Przełącz panel analizy wydajności",
+  "header.analytics_on": "Analityka",
+  "header.analytics_off": "Analityka",
 
   "scene.select_files": "Wybierz pliki",
   "scene.select_folder": "Wybierz folder",

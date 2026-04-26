@@ -41,6 +41,7 @@ const rendererBackgroundByTheme = {
   dark: "#0d111a",
   light: "#f5f7fb",
 } as const;
+const METRICS_EMIT_INTERVAL_MS = 120;
 
 function getPersistedState(): PersistedState {
   const fallback: PersistedState = { speed: 1, mode: "loop", theme: "dark" };
@@ -71,6 +72,7 @@ export function useSpinePreview() {
     stopRequested: false,
   });
   const benchmarkProgressEmitRef = useRef(0);
+  const metricsEmitRef = useRef(0);
 
   const [models, setModels] = useState<SpineModel[]>([]);
   const [activeModel, setActiveModel] = useState<SpineModel | null>(null);
@@ -189,11 +191,15 @@ export function useSpinePreview() {
       pixi.app.ticker.add(() => {
         const current = metricsRef.current?.getSnapshot();
         if (current) {
-          setMetrics(current);
+          const now = performance.now();
+          if (now - metricsEmitRef.current > METRICS_EMIT_INTERVAL_MS) {
+            metricsEmitRef.current = now;
+            setMetrics(current);
+          }
         }
 
         atlasTicker++;
-        if (atlasTicker % 18 === 0) {
+        if (atlasTicker % 36 === 0) {
           setAtlasLiveTick((n) => n + 1);
         }
 
@@ -202,9 +208,9 @@ export function useSpinePreview() {
           bench.samples.push(current.frameTimeMs);
           const elapsed = performance.now() - bench.startAt;
           const progress = Math.min(1, elapsed / bench.durationMs);
-          const now = performance.now();
-          if (now - benchmarkProgressEmitRef.current > 120) {
-            benchmarkProgressEmitRef.current = now;
+          const emitNow = performance.now();
+          if (emitNow - benchmarkProgressEmitRef.current > 120) {
+            benchmarkProgressEmitRef.current = emitNow;
             setBenchmark({ status: "running", progress });
           }
 

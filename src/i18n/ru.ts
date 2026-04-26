@@ -13,6 +13,9 @@ export const ruMessages: Record<MessageKey, string> = {
   "header.lang_en": "English",
   "header.lang_pl": "Polski",
   "header.lang_ru": "Русский",
+  "header.analytics_aria": "Переключить панель анализа производительности",
+  "header.analytics_on": "Аналитика",
+  "header.analytics_off": "Аналитика",
 
   "scene.select_files": "Выбрать файлы",
   "scene.select_folder": "Выбрать папку",

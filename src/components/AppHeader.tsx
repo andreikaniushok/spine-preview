@@ -4,6 +4,8 @@ import type { Locale, MessageKey } from "../i18n/messages";
 interface AppHeaderProps {
   theme: "dark" | "light";
   onThemeChange: (theme: "dark" | "light") => void;
+  analyticsVisible: boolean;
+  onAnalyticsVisibleChange: (visible: boolean) => void;
 }
 
 const locales: Locale[] = ["en", "pl", "ru"];
@@ -14,7 +16,12 @@ const localeLabelKey: Record<Locale, MessageKey> = {
   ru: "header.lang_ru",
 };
 
-export function AppHeader({ theme, onThemeChange }: AppHeaderProps) {
+export function AppHeader({
+  theme,
+  onThemeChange,
+  analyticsVisible,
+  onAnalyticsVisibleChange,
+}: AppHeaderProps) {
   const { locale, setLocale, t } = useI18n();
 
   return (
@@ -51,6 +58,25 @@ export function AppHeader({ theme, onThemeChange }: AppHeaderProps) {
               aria-labelledby="theme-header-label"
               checked={theme === "light"}
               onChange={(e) => onThemeChange(e.target.checked ? "light" : "dark")}
+            />
+            <span className="theme-toggle-track">
+              <span className="theme-toggle-thumb" />
+            </span>
+          </label>
+        </div>
+        <div className="app-header-field app-header-theme">
+          <span className="app-header-label" id="analytics-header-label">
+            {analyticsVisible ? t("header.analytics_on") : t("header.analytics_off")}
+          </span>
+          <label className="theme-toggle" htmlFor="app-analytics-switch">
+            <input
+              id="app-analytics-switch"
+              className="theme-toggle-input"
+              type="checkbox"
+              aria-label={t("header.analytics_aria")}
+              aria-labelledby="analytics-header-label"
+              checked={analyticsVisible}
+              onChange={(e) => onAnalyticsVisibleChange(e.target.checked)}
             />
             <span className="theme-toggle-track">
               <span className="theme-toggle-thumb" />

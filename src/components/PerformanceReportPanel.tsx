@@ -1,3 +1,4 @@
+import { memo, useMemo, useState } from "react";
 import type { AtlasAnalysisReport } from "../analysis/atlasAnalysis";
 import type { ImpactLevel, SpinePerformanceReport } from "../analysis/spinePerformanceReport";
 import {
@@ -9,10 +10,16 @@ import { useI18n } from "../i18n/useI18n";
 import type { MessageKey } from "../i18n/messages";
 import type { MessageVars } from "../i18n/types";
 import type { PerformanceBaseline } from "../types/performanceBaseline";
+import type { BenchmarkUiState, SpineModel } from "../types/spine";
 
 interface PerformanceReportPanelProps {
   report: SpinePerformanceReport | null;
   atlasReport: AtlasAnalysisReport | null;
+  activeModel: SpineModel | null;
+  benchmark: BenchmarkUiState;
+  onBenchmarkStart: (durationSec: number) => void;
+  onBenchmarkStop: () => void;
+  onBenchmarkClear: () => void;
   baseline: PerformanceBaseline | null;
   onCaptureBaseline: () => void;
   onClearBaseline: () => void;
@@ -47,14 +54,354 @@ function compareLine(
   return t("perf.compare_lvl", { label, a: String(a), b: String(b), arrow });
 }
 
-export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
-  const { report, atlasReport, baseline, onCaptureBaseline, onClearBaseline } = props;
+function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
+  const {
+    report,
+    atlasReport,
+    activeModel,
+    benchmark,
+    onBenchmarkStart,
+    onBenchmarkStop,
+    onBenchmarkClear,
+    baseline,
+    onCaptureBaseline,
+    onClearBaseline,
+  } = props;
   const { t } = useI18n();
+  const [benchmarkDurationSec, setBenchmarkDurationSec] = useState<number>(5);
+  const [assetsRegionsOpen, setAssetsRegionsOpen] = useState(false);
+  const isBenchmarkRunning = benchmark.status === "running";
+
+  const regionPreview = useMemo(() => {
+    const names = atlasReport?.regionNames;
+    if (!names?.length) {
+      return [];
+    }
+    return names.slice(0, 500);
+  }, [atlasReport?.regionNames]);
+  const atlasPagesRows = useMemo(
+    () =>
+      atlasReport?.pages.map((p) => (
+        <tr key={p.fileName}>
+          <td>{p.fileName}</td>
+          <td>
+            {p.width}×{p.height}
+          </td>
+          <td>{p.regionCount}</td>
+          <td>{p.utilizationPercent.toFixed(1)}%</td>
+          <td>
+            {p.filterMin} / {p.filterMag}
+          </td>
+          <td>
+            {p.wrapU} / {p.wrapV}
+          </td>
+          <td>{p.premultipliedAlpha ? t("common.yes") : t("common.no")}</td>
+        </tr>
+      )) ?? null,
+    [atlasReport?.pages, t],
+  );
+  const largestRegionsRows = useMemo(
+    () =>
+      atlasReport?.topRegionsByArea.map((r) => (
+        <tr key={`${r.page}:${r.name}`}>
+          <td>{r.name}</td>
+          <td>{r.page}</td>
+          <td>
+            {r.x}, {r.y}
+          </td>
+          <td>
+            {r.width}×{r.height}
+          </td>
+          <td>{r.pixelArea.toLocaleString()}</td>
+          <td>{r.rotated ? t("common.yes") : t("common.no")}</td>
+          <td>
+            {r.originalWidth}×{r.originalHeight}
+          </td>
+        </tr>
+      )) ?? null,
+    [atlasReport?.topRegionsByArea, t],
+  );
+  const perAnimationRows = useMemo(
+    () =>
+      report?.perAnimation.map((row) => (
+        <tr key={row.name}>
+          <td>{row.name}</td>
+          <td>{row.durationSec.toFixed(2)}s</td>
+          <td>{row.renderImpact}</td>
+          <td>{row.computeImpact}</td>
+          <td>{row.activeFeatures}</td>
+        </tr>
+      )) ?? null,
+    [report?.perAnimation],
+  );
+  const perAnimationMeshesRows = useMemo(
+    () =>
+      report?.perAnimationMeshes.map((row) => (
+        <tr key={row.animation}>
+          <td>{row.animation}</td>
+          <td>{row.activeMeshes}</td>
+          <td>{row.totalVertices}</td>
+          <td>{row.deformedVertices}</td>
+          <td>{row.weightedBoneRefs}</td>
+          <td>{row.renderImpact}</td>
+        </tr>
+      )) ?? null,
+    [report?.perAnimationMeshes],
+  );
+  const globalMeshRows = useMemo(
+    () =>
+      report?.globalMeshTop.map((row) => (
+        <tr key={row.slotName}>
+          <td>{row.slotName}</td>
+          <td>{row.vertices}</td>
+          <td>{row.deformed ? t("common.yes") : t("common.no")}</td>
+          <td>{row.boneWeights}</td>
+          <td>{row.hasParentMesh ? t("common.yes") : t("common.no")}</td>
+        </tr>
+      )) ?? null,
+    [report?.globalMeshTop, t],
+  );
+  const clippingRows = useMemo(
+    () =>
+      report?.clippingRows.map((row) => (
+        <tr key={row.animation}>
+          <td>{row.animation}</td>
+          <td>{row.hasClipping ? t("common.yes") : t("common.no")}</td>
+          <td>{row.activeMasks}</td>
+          <td>{row.clipVertices}</td>
+          <td>{row.impact}</td>
+        </tr>
+      )) ?? null,
+    [report?.clippingRows, t],
+  );
+  const blendRows = useMemo(
+    () =>
+      report?.blendRows.map((row) => (
+        <tr key={row.animation}>
+          <td>{row.animation}</td>
+          <td>{row.hasBlendModes ? t("common.yes") : t("common.no")}</td>
+          <td>{row.maxNonNormal}</td>
+          <td>{row.maxAdditive}</td>
+          <td>{row.maxMultiply}</td>
+          <td>{row.impact}</td>
+        </tr>
+      )) ?? null,
+    [report?.blendRows, t],
+  );
+  const constraintAnimRows = useMemo(
+    () =>
+      report?.constraintAnimRows.map((row) => (
+        <tr key={row.animation}>
+          <td>{row.animation}</td>
+          <td>{row.physics}</td>
+          <td>{row.ik}</td>
+          <td>{row.transform}</td>
+          <td>{row.path}</td>
+          <td>{row.totalActive}</td>
+          <td>{row.impact}</td>
+        </tr>
+      )) ?? null,
+    [report?.constraintAnimRows],
+  );
+  const constraintBreakdownRows = useMemo(
+    () =>
+      report?.constraintBreakdown.map((row) => (
+        <tr key={row.type}>
+          <td>{row.type}</td>
+          <td>{row.count}</td>
+          <td>{row.percentOfTotal.toFixed(1)}%</td>
+        </tr>
+      )) ?? null,
+    [report?.constraintBreakdown],
+  );
+  const transformConstraintRows = useMemo(
+    () =>
+      report?.transformConstraintDetails.map((row) => (
+        <tr key={row.name}>
+          <td>{row.name}</td>
+          <td>{row.targetBone}</td>
+          <td>{row.boneCount}</td>
+          <td className="perf-cell-mono">{row.mixSummary}</td>
+          <td>{row.status}</td>
+        </tr>
+      )) ?? null,
+    [report?.transformConstraintDetails],
+  );
 
   if (!report) {
     return (
       <aside className="performance-panel performance-panel-empty">
         <h2 className="performance-title">{t("perf.title")}</h2>
+        <section className="perf-section assets-section">
+          <h3>{t("control.assets")}</h3>
+          {!activeModel ? (
+            <p className="performance-muted">{t("control.assets_load_hint")}</p>
+          ) : (
+            <>
+              <div className="assets-files">
+                <div className="assets-file-row">
+                  <span className="assets-label">{t("control.sk_label")}</span>
+                  <code className="assets-path">{activeModel.skeletonFileName}</code>
+                </div>
+                <div className="assets-file-row">
+                  <span className="assets-label">{t("control.atlas_label")}</span>
+                  <code className="assets-path">{activeModel.atlasFileName}</code>
+                </div>
+              </div>
+              {atlasReport?.parseError ? (
+                <p className="performance-atlas-error">
+                  {t("control.atlas_parse_prefix")} {atlasReport.parseError}
+                </p>
+              ) : atlasReport ? (
+                <>
+                  <dl className="assets-stats-grid">
+                    <div>
+                      <dt>{t("control.pages")}</dt>
+                      <dd>{atlasReport.totalPages}</dd>
+                    </div>
+                    <div>
+                      <dt>{t("control.regions")}</dt>
+                      <dd>{atlasReport.totalRegions}</dd>
+                    </div>
+                    <div>
+                      <dt>{t("control.draw_calls")}</dt>
+                      <dd>{atlasReport.renderPasses?.estimatedDrawCalls ?? "—"}</dd>
+                    </div>
+                    <div>
+                      <dt>{t("control.page_switches")}</dt>
+                      <dd>{atlasReport.renderPasses?.texturePageSwitches ?? "—"}</dd>
+                    </div>
+                  </dl>
+                  <p className="assets-stats-hint">{t("control.assets_stats_hint")}</p>
+                  {assetsRegionsOpen ? (
+                    <button
+                      type="button"
+                      className="assets-toggle"
+                      onClick={() => setAssetsRegionsOpen((o) => !o)}
+                      aria-expanded="true"
+                    >
+                      {t("control.hide_regions")}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className="assets-toggle"
+                      onClick={() => setAssetsRegionsOpen((o) => !o)}
+                      aria-expanded="false"
+                    >
+                      {t("control.show_regions", { count: atlasReport.totalRegions })}
+                    </button>
+                  )}
+                  {assetsRegionsOpen && (
+                    <div className="scroll-list assets-region-list" role="list">
+                      {regionPreview.map((name) => (
+                        <span key={name} className="assets-region-chip" role="listitem">
+                          {name}
+                        </span>
+                      ))}
+                      {atlasReport.totalRegions > regionPreview.length && (
+                        <span className="performance-muted">
+                          {t("control.regions_more", {
+                            count: atlasReport.totalRegions - regionPreview.length,
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="performance-muted">{t("control.no_atlas_data")}</p>
+              )}
+            </>
+          )}
+        </section>
+        <section className="perf-section benchmark-section">
+          <h3>{t("control.benchmark")}</h3>
+          <p className="benchmark-hint">{t("control.benchmark_hint")}</p>
+          <div className="perf-controls-row">
+            <label>{t("control.duration")}</label>
+            <select
+              aria-label={t("control.duration")}
+              value={benchmarkDurationSec}
+              disabled={isBenchmarkRunning}
+              onChange={(e) => setBenchmarkDurationSec(Number(e.target.value))}
+            >
+              {[3, 5, 10, 30].map((sec) => (
+                <option key={sec} value={sec}>
+                  {sec}s
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="perf-controls-row benchmark-actions">
+            {!isBenchmarkRunning ? (
+              <button type="button" onClick={() => onBenchmarkStart(benchmarkDurationSec)}>
+                {t("control.start")}
+              </button>
+            ) : (
+              <button type="button" onClick={onBenchmarkStop}>
+                {t("control.stop_early")}
+              </button>
+            )}
+          </div>
+          {benchmark.status === "running" && (
+            <div className="benchmark-progress" role="status" aria-live="polite">
+              <div className="benchmark-progress-track">
+                <div
+                  className="benchmark-progress-fill"
+                  style={{ width: `${Math.round(benchmark.progress * 100)}%` }}
+                />
+              </div>
+              <span className="benchmark-progress-label">
+                {t("control.recording", { pct: Math.round(benchmark.progress * 100) })}
+              </span>
+            </div>
+          )}
+          {benchmark.status === "done" && (
+            <div className="benchmark-results">
+              <dl className="benchmark-stats">
+                <div>
+                  <dt>{t("control.frames")}</dt>
+                  <dd>{benchmark.result.frameCount}</dd>
+                </div>
+                <div>
+                  <dt>{t("control.wall_time")}</dt>
+                  <dd>{(benchmark.result.wallDurationMs / 1000).toFixed(2)} s</dd>
+                </div>
+                <div>
+                  <dt>{t("control.mean_fps")}</dt>
+                  <dd>{benchmark.result.meanFps.toFixed(1)}</dd>
+                </div>
+                <div>
+                  <dt>{t("control.frame_ms_avg")}</dt>
+                  <dd>{benchmark.result.frameTimeMs.mean.toFixed(2)}</dd>
+                </div>
+                <div>
+                  <dt>{t("control.frame_ms_p50")}</dt>
+                  <dd>{benchmark.result.frameTimeMs.p50.toFixed(2)}</dd>
+                </div>
+                <div>
+                  <dt>{t("control.frame_ms_p95")}</dt>
+                  <dd>{benchmark.result.frameTimeMs.p95.toFixed(2)}</dd>
+                </div>
+                <div>
+                  <dt>{t("control.frame_ms_p99")}</dt>
+                  <dd>{benchmark.result.frameTimeMs.p99.toFixed(2)}</dd>
+                </div>
+                <div>
+                  <dt>{t("control.frame_ms_minmax")}</dt>
+                  <dd>
+                    {benchmark.result.frameTimeMs.min.toFixed(2)} –{" "}
+                    {benchmark.result.frameTimeMs.max.toFixed(2)}
+                  </dd>
+                </div>
+              </dl>
+              <button type="button" className="benchmark-clear" onClick={onBenchmarkClear}>
+                {t("control.clear_results")}
+              </button>
+            </div>
+          )}
+        </section>
         <p className="performance-muted">{t("perf.empty")}</p>
       </aside>
     );
@@ -81,7 +428,6 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
     (m, r) => Math.max(m, r.maxAdditive + r.maxMultiply + r.maxNonNormal),
     0,
   );
-
   return (
     <aside className="performance-panel">
       <header className="performance-header">
@@ -146,6 +492,178 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
         </div>
       </section>
 
+      <section className="perf-section assets-section">
+        <h3>{t("control.assets")}</h3>
+        {!activeModel ? (
+          <p className="performance-muted">{t("control.assets_load_hint")}</p>
+        ) : (
+          <>
+            <div className="assets-files">
+              <div className="assets-file-row">
+                <span className="assets-label">{t("control.sk_label")}</span>
+                <code className="assets-path">{activeModel.skeletonFileName}</code>
+              </div>
+              <div className="assets-file-row">
+                <span className="assets-label">{t("control.atlas_label")}</span>
+                <code className="assets-path">{activeModel.atlasFileName}</code>
+              </div>
+            </div>
+            {atlasReport?.parseError ? (
+              <p className="performance-atlas-error">
+                {t("control.atlas_parse_prefix")} {atlasReport.parseError}
+              </p>
+            ) : atlasReport ? (
+              <>
+                <dl className="assets-stats-grid">
+                  <div>
+                    <dt>{t("control.pages")}</dt>
+                    <dd>{atlasReport.totalPages}</dd>
+                  </div>
+                  <div>
+                    <dt>{t("control.regions")}</dt>
+                    <dd>{atlasReport.totalRegions}</dd>
+                  </div>
+                  <div>
+                    <dt>{t("control.draw_calls")}</dt>
+                    <dd>{atlasReport.renderPasses?.estimatedDrawCalls ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>{t("control.page_switches")}</dt>
+                    <dd>{atlasReport.renderPasses?.texturePageSwitches ?? "—"}</dd>
+                  </div>
+                </dl>
+                <p className="assets-stats-hint">{t("control.assets_stats_hint")}</p>
+                {assetsRegionsOpen ? (
+                  <button
+                    type="button"
+                    className="assets-toggle"
+                    onClick={() => setAssetsRegionsOpen((o) => !o)}
+                    aria-expanded="true"
+                  >
+                    {t("control.hide_regions")}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="assets-toggle"
+                    onClick={() => setAssetsRegionsOpen((o) => !o)}
+                    aria-expanded="false"
+                  >
+                    {t("control.show_regions", { count: atlasReport.totalRegions })}
+                  </button>
+                )}
+                {assetsRegionsOpen && (
+                  <div className="scroll-list assets-region-list" role="list">
+                    {regionPreview.map((name) => (
+                      <span key={name} className="assets-region-chip" role="listitem">
+                        {name}
+                      </span>
+                    ))}
+                    {atlasReport.totalRegions > regionPreview.length && (
+                      <span className="performance-muted">
+                        {t("control.regions_more", {
+                          count: atlasReport.totalRegions - regionPreview.length,
+                        })}
+                      </span>
+                    )}
+                  </div>
+                )}
+              </>
+            ) : (
+              <p className="performance-muted">{t("control.no_atlas_data")}</p>
+            )}
+          </>
+        )}
+      </section>
+
+      <section className="perf-section benchmark-section">
+        <h3>{t("control.benchmark")}</h3>
+        <p className="benchmark-hint">{t("control.benchmark_hint")}</p>
+        <div className="perf-controls-row">
+          <label>{t("control.duration")}</label>
+          <select
+            aria-label={t("control.duration")}
+            value={benchmarkDurationSec}
+            disabled={isBenchmarkRunning}
+            onChange={(e) => setBenchmarkDurationSec(Number(e.target.value))}
+          >
+            {[3, 5, 10, 30].map((sec) => (
+              <option key={sec} value={sec}>
+                {sec}s
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="perf-controls-row benchmark-actions">
+          {!isBenchmarkRunning ? (
+            <button type="button" onClick={() => onBenchmarkStart(benchmarkDurationSec)}>
+              {t("control.start")}
+            </button>
+          ) : (
+            <button type="button" onClick={onBenchmarkStop}>
+              {t("control.stop_early")}
+            </button>
+          )}
+        </div>
+        {benchmark.status === "running" && (
+          <div className="benchmark-progress" role="status" aria-live="polite">
+            <div className="benchmark-progress-track">
+              <div
+                className="benchmark-progress-fill"
+                style={{ width: `${Math.round(benchmark.progress * 100)}%` }}
+              />
+            </div>
+            <span className="benchmark-progress-label">
+              {t("control.recording", { pct: Math.round(benchmark.progress * 100) })}
+            </span>
+          </div>
+        )}
+        {benchmark.status === "done" && (
+          <div className="benchmark-results">
+            <dl className="benchmark-stats">
+              <div>
+                <dt>{t("control.frames")}</dt>
+                <dd>{benchmark.result.frameCount}</dd>
+              </div>
+              <div>
+                <dt>{t("control.wall_time")}</dt>
+                <dd>{(benchmark.result.wallDurationMs / 1000).toFixed(2)} s</dd>
+              </div>
+              <div>
+                <dt>{t("control.mean_fps")}</dt>
+                <dd>{benchmark.result.meanFps.toFixed(1)}</dd>
+              </div>
+              <div>
+                <dt>{t("control.frame_ms_avg")}</dt>
+                <dd>{benchmark.result.frameTimeMs.mean.toFixed(2)}</dd>
+              </div>
+              <div>
+                <dt>{t("control.frame_ms_p50")}</dt>
+                <dd>{benchmark.result.frameTimeMs.p50.toFixed(2)}</dd>
+              </div>
+              <div>
+                <dt>{t("control.frame_ms_p95")}</dt>
+                <dd>{benchmark.result.frameTimeMs.p95.toFixed(2)}</dd>
+              </div>
+              <div>
+                <dt>{t("control.frame_ms_p99")}</dt>
+                <dd>{benchmark.result.frameTimeMs.p99.toFixed(2)}</dd>
+              </div>
+              <div>
+                <dt>{t("control.frame_ms_minmax")}</dt>
+                <dd>
+                  {benchmark.result.frameTimeMs.min.toFixed(2)} –{" "}
+                  {benchmark.result.frameTimeMs.max.toFixed(2)}
+                </dd>
+              </div>
+            </dl>
+            <button type="button" className="benchmark-clear" onClick={onBenchmarkClear}>
+              {t("control.clear_results")}
+            </button>
+          </div>
+        )}
+      </section>
+
       {atlasReport && (
         <section className="perf-section">
           <h3>{t("perf.texture_atlas")}</h3>
@@ -201,23 +719,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {atlasReport.pages.map((p) => (
-                      <tr key={p.fileName}>
-                        <td>{p.fileName}</td>
-                        <td>
-                          {p.width}×{p.height}
-                        </td>
-                        <td>{p.regionCount}</td>
-                        <td>{p.utilizationPercent.toFixed(1)}%</td>
-                        <td>
-                          {p.filterMin} / {p.filterMag}
-                        </td>
-                        <td>
-                          {p.wrapU} / {p.wrapV}
-                        </td>
-                        <td>{p.premultipliedAlpha ? t("common.yes") : t("common.no")}</td>
-                      </tr>
-                    ))}
+                    {atlasPagesRows}
                   </tbody>
                 </table>
               </div>
@@ -254,23 +756,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
                     </tr>
                   </thead>
                   <tbody>
-                    {atlasReport.topRegionsByArea.map((r) => (
-                      <tr key={`${r.page}:${r.name}`}>
-                        <td>{r.name}</td>
-                        <td>{r.page}</td>
-                        <td>
-                          {r.x}, {r.y}
-                        </td>
-                        <td>
-                          {r.width}×{r.height}
-                        </td>
-                        <td>{r.pixelArea.toLocaleString()}</td>
-                        <td>{r.rotated ? t("common.yes") : t("common.no")}</td>
-                        <td>
-                          {r.originalWidth}×{r.originalHeight}
-                        </td>
-                      </tr>
-                    ))}
+                    {largestRegionsRows}
                   </tbody>
                 </table>
               </div>
@@ -334,15 +820,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {report.perAnimation.map((row) => (
-                <tr key={row.name}>
-                  <td>{row.name}</td>
-                  <td>{row.durationSec.toFixed(2)}s</td>
-                  <td>{row.renderImpact}</td>
-                  <td>{row.computeImpact}</td>
-                  <td>{row.activeFeatures}</td>
-                </tr>
-              ))}
+              {perAnimationRows}
             </tbody>
           </table>
         </div>
@@ -382,16 +860,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {report.perAnimationMeshes.map((row) => (
-                <tr key={row.animation}>
-                  <td>{row.animation}</td>
-                  <td>{row.activeMeshes}</td>
-                  <td>{row.totalVertices}</td>
-                  <td>{row.deformedVertices}</td>
-                  <td>{row.weightedBoneRefs}</td>
-                  <td>{row.renderImpact}</td>
-                </tr>
-              ))}
+              {perAnimationMeshesRows}
             </tbody>
           </table>
         </div>
@@ -417,15 +886,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {report.globalMeshTop.map((row) => (
-                <tr key={row.slotName}>
-                  <td>{row.slotName}</td>
-                  <td>{row.vertices}</td>
-                  <td>{row.deformed ? t("common.yes") : t("common.no")}</td>
-                  <td>{row.boneWeights}</td>
-                  <td>{row.hasParentMesh ? t("common.yes") : t("common.no")}</td>
-                </tr>
-              ))}
+              {globalMeshRows}
             </tbody>
           </table>
         </div>
@@ -450,15 +911,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {report.clippingRows.map((row) => (
-                <tr key={row.animation}>
-                  <td>{row.animation}</td>
-                  <td>{row.hasClipping ? t("common.yes") : t("common.no")}</td>
-                  <td>{row.activeMasks}</td>
-                  <td>{row.clipVertices}</td>
-                  <td>{row.impact}</td>
-                </tr>
-              ))}
+              {clippingRows}
             </tbody>
           </table>
         </div>
@@ -489,16 +942,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {report.blendRows.map((row) => (
-                <tr key={row.animation}>
-                  <td>{row.animation}</td>
-                  <td>{row.hasBlendModes ? t("common.yes") : t("common.no")}</td>
-                  <td>{row.maxNonNormal}</td>
-                  <td>{row.maxAdditive}</td>
-                  <td>{row.maxMultiply}</td>
-                  <td>{row.impact}</td>
-                </tr>
-              ))}
+              {blendRows}
             </tbody>
           </table>
         </div>
@@ -525,17 +969,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {report.constraintAnimRows.map((row) => (
-                <tr key={row.animation}>
-                  <td>{row.animation}</td>
-                  <td>{row.physics}</td>
-                  <td>{row.ik}</td>
-                  <td>{row.transform}</td>
-                  <td>{row.path}</td>
-                  <td>{row.totalActive}</td>
-                  <td>{row.impact}</td>
-                </tr>
-              ))}
+              {constraintAnimRows}
             </tbody>
           </table>
         </div>
@@ -551,13 +985,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {report.constraintBreakdown.map((row) => (
-                <tr key={row.type}>
-                  <td>{row.type}</td>
-                  <td>{row.count}</td>
-                  <td>{row.percentOfTotal.toFixed(1)}%</td>
-                </tr>
-              ))}
+              {constraintBreakdownRows}
             </tbody>
           </table>
         </div>
@@ -575,15 +1003,7 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
               </tr>
             </thead>
             <tbody>
-              {report.transformConstraintDetails.map((row) => (
-                <tr key={row.name}>
-                  <td>{row.name}</td>
-                  <td>{row.targetBone}</td>
-                  <td>{row.boneCount}</td>
-                  <td className="perf-cell-mono">{row.mixSummary}</td>
-                  <td>{row.status}</td>
-                </tr>
-              ))}
+              {transformConstraintRows}
             </tbody>
           </table>
         </div>
@@ -593,3 +1013,5 @@ export function PerformanceReportPanel(props: PerformanceReportPanelProps) {
     </aside>
   );
 }
+
+export const PerformanceReportPanel = memo(PerformanceReportPanelInner);

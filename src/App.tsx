@@ -11,10 +11,14 @@ function App() {
   const preview = useSpinePreview();
   const vm = preview.viewModel;
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
+  const [isAnalyticsVisible, setIsAnalyticsVisible] = useState(false);
   const filesInputRef = useRef<HTMLInputElement | null>(null);
   const folderInputRef = useRef<HTMLInputElement | null>(null);
 
-  const classes = useMemo(() => `app app-${vm.theme}`, [vm.theme]);
+  const classes = useMemo(
+    () => `app app-${vm.theme}${isAnalyticsVisible ? "" : " app-analytics-hidden"}`,
+    [isAnalyticsVisible, vm.theme],
+  );
 
   useEffect(() => {
     if (!folderInputRef.current) {
@@ -26,7 +30,12 @@ function App() {
 
   return (
     <div className={classes}>
-      <AppHeader theme={vm.theme} onThemeChange={preview.actions.setTheme} />
+      <AppHeader
+        theme={vm.theme}
+        onThemeChange={preview.actions.setTheme}
+        analyticsVisible={isAnalyticsVisible}
+        onAnalyticsVisibleChange={setIsAnalyticsVisible}
+      />
       <ControlPanel
         models={vm.models}
         activeModel={vm.activeModel}
@@ -47,11 +56,6 @@ function App() {
         onSkinChange={preview.actions.setSkin}
         onAlphaChange={preview.actions.setModelAlpha}
         onDebugToggle={preview.actions.toggleDebug}
-        benchmark={vm.benchmark}
-        onBenchmarkStart={preview.actions.startBenchmark}
-        onBenchmarkStop={preview.actions.stopBenchmark}
-        onBenchmarkClear={preview.actions.clearBenchmark}
-        atlasReport={vm.atlasReport}
       />
 
       <div className="scene-column">
@@ -141,13 +145,20 @@ function App() {
       </main>
       </div>
 
-      <PerformanceReportPanel
-        report={vm.performanceReport}
-        atlasReport={vm.atlasReport}
-        baseline={vm.performanceBaseline}
-        onCaptureBaseline={preview.actions.capturePerformanceBaseline}
-        onClearBaseline={preview.actions.clearPerformanceBaseline}
-      />
+      {isAnalyticsVisible && (
+        <PerformanceReportPanel
+          report={vm.performanceReport}
+          atlasReport={vm.atlasReport}
+          activeModel={vm.activeModel}
+          benchmark={vm.benchmark}
+          onBenchmarkStart={preview.actions.startBenchmark}
+          onBenchmarkStop={preview.actions.stopBenchmark}
+          onBenchmarkClear={preview.actions.clearBenchmark}
+          baseline={vm.performanceBaseline}
+          onCaptureBaseline={preview.actions.capturePerformanceBaseline}
+          onClearBaseline={preview.actions.clearPerformanceBaseline}
+        />
+      )}
     </div>
   );
 }
