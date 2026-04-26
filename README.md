@@ -45,14 +45,14 @@ Project structure follows modular OOP + SOLID style:
 ## Run locally
 
 ```bash
-yarn install
-yarn dev
+npm install
+npm run dev
 ```
 
 ## Build
 
 ```bash
-yarn build
+npm run build
 ```
 # React + TypeScript + Vite
 
