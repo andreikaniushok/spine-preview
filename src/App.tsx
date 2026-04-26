@@ -8,6 +8,8 @@ import { useSpinePreview } from "./hooks/useSpinePreview";
 
 function App() {
   const { t } = useI18n();
+  const footerYear = 2026;
+  const footerAuthor = "@andreikaniushok";
   const preview = useSpinePreview();
   const vm = preview.viewModel;
   const [isDraggingFiles, setIsDraggingFiles] = useState(false);
@@ -62,92 +64,95 @@ function App() {
       />
 
       <div className="scene-column">
-      <main
-        className={`scene-wrap ${isDraggingFiles ? "drag-over" : ""}`}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setIsDraggingFiles(true);
-        }}
-        onDragLeave={() => setIsDraggingFiles(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setIsDraggingFiles(false);
-          if (event.dataTransfer.files.length > 0) {
-            void preview.actions.loadFiles(event.dataTransfer.files);
-          }
-        }}
-      >
-        <div className="overlay scene-actions">
-          <button type="button" onClick={() => filesInputRef.current?.click()}>
-            {t("scene.select_files")}
-          </button>
-          <button type="button" onClick={() => folderInputRef.current?.click()}>
-            {t("scene.select_folder")}
-          </button>
-          <input
-            ref={filesInputRef}
-            className="sr-only"
-            type="file"
-            aria-label={t("scene.aria_select_files")}
-            multiple
-            onChange={(event) => {
-              const files = event.currentTarget.files;
-              if (files && files.length > 0) {
-                void preview.actions.loadFiles(files);
-              }
-              event.currentTarget.value = "";
-            }}
-          />
-          <input
-            ref={folderInputRef}
-            className="sr-only"
-            type="file"
-            aria-label={t("scene.aria_select_folder")}
-            multiple
-            onChange={(event) => {
-              const files = event.currentTarget.files;
-              if (files && files.length > 0) {
-                void preview.actions.loadFiles(files);
-              }
-              event.currentTarget.value = "";
-            }}
-          />
-        </div>
-
-        <div ref={preview.hostRef} className="pixi-host" />
-        {isMetricsVisible && (
-          <div className="overlay metrics">
-            <span>
-              {t("scene.fps")}: {vm.metrics.fps.toFixed(0)}
-            </span>
-            <span>
-              {t("scene.frame_ms")}: {vm.metrics.frameTimeMs.toFixed(2)} ms
-            </span>
+        <main
+          className={`scene-wrap ${isDraggingFiles ? "drag-over" : ""}`}
+          onDragOver={(event) => {
+            event.preventDefault();
+            setIsDraggingFiles(true);
+          }}
+          onDragLeave={() => setIsDraggingFiles(false)}
+          onDrop={(event) => {
+            event.preventDefault();
+            setIsDraggingFiles(false);
+            if (event.dataTransfer.files.length > 0) {
+              void preview.actions.loadFiles(event.dataTransfer.files);
+            }
+          }}
+        >
+          <div className="overlay scene-actions">
+            <button type="button" onClick={() => filesInputRef.current?.click()}>
+              {t("scene.select_files")}
+            </button>
+            <button type="button" onClick={() => folderInputRef.current?.click()}>
+              {t("scene.select_folder")}
+            </button>
+            <input
+              ref={filesInputRef}
+              className="sr-only"
+              type="file"
+              aria-label={t("scene.aria_select_files")}
+              multiple
+              onChange={(event) => {
+                const files = event.currentTarget.files;
+                if (files && files.length > 0) {
+                  void preview.actions.loadFiles(files);
+                }
+                event.currentTarget.value = "";
+              }}
+            />
+            <input
+              ref={folderInputRef}
+              className="sr-only"
+              type="file"
+              aria-label={t("scene.aria_select_folder")}
+              multiple
+              onChange={(event) => {
+                const files = event.currentTarget.files;
+                if (files && files.length > 0) {
+                  void preview.actions.loadFiles(files);
+                }
+                event.currentTarget.value = "";
+              }}
+            />
           </div>
-        )}
-        <div className="notices">
-          {vm.notices.map((notice) => (
-            <div key={notice.id} className={`notice notice-${notice.level}`}>
-              <span>{t(notice.messageKey, notice.vars)}</span>
-              <button
-                type="button"
-                aria-label={t("common.dismiss")}
-                onClick={() => preview.actions.dismissNotice(notice.id)}
-              >
-                ×
-              </button>
+
+          <div ref={preview.hostRef} className="pixi-host" />
+          {isMetricsVisible && (
+            <div className="overlay metrics">
+              <span>
+                {t("scene.fps")}: {vm.metrics.fps.toFixed(0)}
+              </span>
+              <span>
+                {t("scene.frame_ms")}: {vm.metrics.frameTimeMs.toFixed(2)} ms
+              </span>
             </div>
-          ))}
-        </div>
-
-        {!vm.activeModel && (
-          <div className="overlay drop-hint">
-            {t("scene.drop_title")}
-            <br />
-            <code>{t("scene.drop_hint_sub")}</code>
+          )}
+          <div className="notices">
+            {vm.notices.map((notice) => (
+              <div key={notice.id} className={`notice notice-${notice.level}`}>
+                <span>{t(notice.messageKey, notice.vars)}</span>
+                <button
+                  type="button"
+                  aria-label={t("common.dismiss")}
+                  onClick={() => preview.actions.dismissNotice(notice.id)}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
           </div>
-        )}
-      </main>
+
+          {!vm.activeModel && (
+            <div className="overlay drop-hint">
+              {t("scene.drop_title")}
+              <br />
+              <code>{t("scene.drop_hint_sub")}</code>
+            </div>
+          )}
+        </main>
+        <footer className="app-footer">
+          <span>{t("common.footer_copyright", { year: footerYear, author: footerAuthor })}</span>
+        </footer>
       </div>
 
       {isAnalyticsVisible && (

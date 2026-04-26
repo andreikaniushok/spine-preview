@@ -2,6 +2,7 @@ export const enMessages = {
   "common.yes": "Yes",
   "common.no": "No",
   "common.dismiss": "Dismiss",
+  "common.footer_copyright": "Copyright © {{year}} {{author}}",
 
   "header.brand": "Spine Preview",
   "header.theme_aria": "Toggle light theme",

@@ -4,6 +4,7 @@ export const ruMessages: Record<MessageKey, string> = {
   "common.yes": "Да",
   "common.no": "Нет",
   "common.dismiss": "Закрыть",
+  "common.footer_copyright": "Копирайт © {{year}} {{author}}",
 
   "header.brand": "Spine Preview",
   "header.theme_aria": "Переключить светлую тему",

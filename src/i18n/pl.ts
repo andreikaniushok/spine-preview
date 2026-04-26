@@ -4,6 +4,7 @@ export const plMessages: Record<MessageKey, string> = {
   "common.yes": "Tak",
   "common.no": "Nie",
   "common.dismiss": "Zamknij",
+  "common.footer_copyright": "Copyright © {{year}} {{author}}",
 
   "header.brand": "Spine Preview",
   "header.theme_aria": "Przełącz jasny motyw",
