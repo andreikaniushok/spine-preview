@@ -82,6 +82,9 @@ export class SpineManager implements ISpineManager {
       spine,
       animations: spine.skeleton.data.animations.map((item) => item.name),
       skins: spine.skeleton.data.skins.map((item) => item.name),
+      atlasText,
+      atlasFileName: bundle.atlasFile.name,
+      skeletonFileName: bundle.skeletonFile.name,
     };
 
     this.layer.addChild(spine);

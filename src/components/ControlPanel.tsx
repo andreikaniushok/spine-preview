@@ -1,3 +1,4 @@
+import { useI18n } from "../i18n/useI18n";
 import type { PlaybackMode, SpineModel } from "../types/spine";
 
 interface ControlPanelProps {
@@ -10,7 +11,6 @@ interface ControlPanelProps {
   selectedSkin: string;
   alpha: number;
   debugBones: boolean;
-  theme: "dark" | "light";
   onModelSelect: (id: string) => void;
   onModelRemove: (id: string) => void;
   onAnimationPlay: (name: string) => void;
@@ -21,7 +21,6 @@ interface ControlPanelProps {
   onSkinChange: (name: string) => void;
   onAlphaChange: (value: number) => void;
   onDebugToggle: (value: boolean) => void;
-  onThemeToggle: (value: "dark" | "light") => void;
 }
 
 const speedPreset = [0.5, 1, 1.5, 2];
@@ -37,7 +36,6 @@ export function ControlPanel(props: ControlPanelProps) {
     selectedSkin,
     alpha,
     debugBones,
-    theme,
     onModelSelect,
     onModelRemove,
     onAnimationPlay,
@@ -48,22 +46,21 @@ export function ControlPanel(props: ControlPanelProps) {
     onSkinChange,
     onAlphaChange,
     onDebugToggle,
-    onThemeToggle,
   } = props;
+
+  const { t } = useI18n();
 
   return (
     <aside className="control-panel">
-      <h1>Spine Preview</h1>
-
       <section>
-        <h2>Models</h2>
+        <h2>{t("control.models")}</h2>
         <div className="row model-row">
           <select
-            aria-label="Select model"
+            aria-label={t("control.select_model")}
             value={activeModel?.id ?? ""}
             onChange={(e) => onModelSelect(e.target.value)}
           >
-            <option value="">Select model</option>
+            <option value="">{t("control.select_model")}</option>
             {models.map((model) => (
               <option key={model.id} value={model.id}>
                 {model.name}
@@ -75,13 +72,13 @@ export function ControlPanel(props: ControlPanelProps) {
             disabled={!activeModel}
             onClick={() => activeModel && onModelRemove(activeModel.id)}
           >
-            Delete
+            {t("control.delete_model")}
           </button>
         </div>
       </section>
 
       <section>
-        <h2>Animations</h2>
+        <h2>{t("control.animations")}</h2>
         <div className="scroll-list">
           {activeModel?.animations.map((name) => (
             <button
@@ -91,30 +88,30 @@ export function ControlPanel(props: ControlPanelProps) {
             >
               {name}
             </button>
-          )) ?? <span className="hint">No animation loaded</span>}
+          )) ?? <span className="hint">{t("control.no_animations")}</span>}
         </div>
       </section>
 
       <section>
-        <h2>Playback</h2>
+        <h2>{t("control.playback")}</h2>
         <div className="row">
-          <button onClick={onPauseToggle}>{paused ? "Play" : "Pause"}</button>
-          <button onClick={onReset}>Reset</button>
+          <button onClick={onPauseToggle}>{paused ? t("control.play") : t("control.pause")}</button>
+          <button onClick={onReset}>{t("control.reset")}</button>
         </div>
         <div className="row">
-          <label>Mode</label>
+          <label>{t("control.mode")}</label>
           <select
-            aria-label="Playback mode"
+            aria-label={t("control.mode")}
             value={mode}
             onChange={(e) => onModeChange(e.target.value as PlaybackMode)}
           >
-            <option value="loop">Loop</option>
-            <option value="once">Once</option>
+            <option value="loop">{t("control.loop")}</option>
+            <option value="once">{t("control.once")}</option>
           </select>
         </div>
         <div className="row">
-          <label>Speed</label>
-          <select aria-label="Playback speed" value={speed} onChange={(e) => onSpeedChange(Number(e.target.value))}>
+          <label>{t("control.speed")}</label>
+          <select aria-label={t("control.speed")} value={speed} onChange={(e) => onSpeedChange(Number(e.target.value))}>
             {speedPreset.map((item) => (
               <option key={item} value={item}>
                 {item}x
@@ -125,22 +122,22 @@ export function ControlPanel(props: ControlPanelProps) {
       </section>
 
       <section>
-        <h2>Appearance</h2>
+        <h2>{t("control.appearance")}</h2>
         <div className="row">
-          <label>Skin</label>
-          <select aria-label="Skin selector" value={selectedSkin} onChange={(e) => onSkinChange(e.target.value)}>
+          <label>{t("control.skin")}</label>
+          <select aria-label={t("control.skin")} value={selectedSkin} onChange={(e) => onSkinChange(e.target.value)}>
             {activeModel?.skins.map((skinName) => (
               <option key={skinName} value={skinName}>
                 {skinName}
               </option>
-            )) ?? <option value="">Default</option>}
+            )) ?? <option value="">{t("control.default_skin")}</option>}
           </select>
         </div>
         <div className="row">
-          <label>Alpha</label>
+          <label>{t("control.alpha")}</label>
           <input
             type="range"
-            aria-label="Model alpha"
+            aria-label={t("control.alpha")}
             min="0.2"
             max="1"
             step="0.05"
@@ -149,35 +146,16 @@ export function ControlPanel(props: ControlPanelProps) {
           />
         </div>
         <div className="row checkbox-row">
-          <label>Debug bones</label>
+          <label>{t("control.debug_bones")}</label>
           <input
             type="checkbox"
-            aria-label="Toggle debug bones"
+            aria-label={t("control.debug_bones")}
             checked={debugBones}
             onChange={(e) => onDebugToggle(e.target.checked)}
           />
         </div>
       </section>
 
-      <section>
-        <h2>Settings</h2>
-        <div className="row checkbox-row">
-          <label htmlFor="theme-switch">White theme</label>
-          <label className="theme-toggle" htmlFor="theme-switch">
-            <input
-              id="theme-switch"
-              className="theme-toggle-input"
-              type="checkbox"
-              aria-label="Toggle light theme"
-              checked={theme === "light"}
-              onChange={(event) => onThemeToggle(event.target.checked ? "light" : "dark")}
-            />
-            <span className="theme-toggle-track">
-              <span className="theme-toggle-thumb" />
-            </span>
-          </label>
-        </div>
-      </section>
     </aside>
   );
 }
