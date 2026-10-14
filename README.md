@@ -1,6 +1,6 @@
 # Spine Preview
 
-Web preview for [Spine](http://esotericsoftware.com/) animations (React + PixiJS + Spine 4.2).
+Web preview for [Spine](http://esotericsoftware.com/) animations (React + MUI + PixiJS + Spine 4.2).
 
 **Try it:** [spine-preview-nine.vercel.app](https://spine-preview-nine.vercel.app/)
 
@@ -20,7 +20,6 @@ npm run dev
 
 Needs Spine **4.2** exports. Build with `npm run build`.
 
-Структура по слоям (`app` / `ui` / `hooks` / `pixi` / `spine` / `import` / `metrics` / `analytics` / `types`): [О_ПРОЕКТЕ.md](О_ПРОЕКТЕ.md).
 
 ## License
 
