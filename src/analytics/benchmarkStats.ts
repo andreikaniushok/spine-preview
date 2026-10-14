@@ -1,4 +1,4 @@
-import type { BenchmarkResult } from "../types/spine";
+import type { BenchmarkResult } from "../types";
 
 function percentile(sorted: readonly number[], p: number): number {
   if (sorted.length === 0) {

@@ -1,5 +1,5 @@
-import { summarizeBenchmark } from "../../analysis/benchmarkStats";
-import type { BenchmarkResult } from "../../types/spine";
+import { summarizeBenchmark } from "../analytics";
+import type { BenchmarkResult } from "../types";
 
 const PROGRESS_EMIT_INTERVAL_MS = 120;
 

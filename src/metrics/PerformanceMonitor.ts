@@ -1,5 +1,5 @@
 import type { Application } from "pixi.js";
-import type { PerformanceSnapshot } from "../../types/spine";
+import type { PerformanceSnapshot } from "../types";
 
 export interface IPerformanceMonitor {
   getSnapshot(): PerformanceSnapshot;

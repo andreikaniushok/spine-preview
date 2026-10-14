@@ -1,5 +1,5 @@
 import { useI18n } from "../i18n/useI18n";
-import type { PlaybackMode, SpineModel } from "../types/spine";
+import type { PlaybackMode, SpineModel } from "../types";
 
 interface ControlPanelProps {
   models: SpineModel[];

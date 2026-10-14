@@ -20,6 +20,8 @@ npm run dev
 
 Needs Spine **4.2** exports. Build with `npm run build`.
 
+Структура по слоям (`app` / `ui` / `hooks` / `pixi` / `spine` / `import` / `metrics` / `analytics` / `types`): [О_ПРОЕКТЕ.md](О_ПРОЕКТЕ.md).
+
 ## License
 
 [MIT](LICENSE)

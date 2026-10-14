@@ -1,24 +1,24 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SpineDebugRenderer } from "@esotericsoftware/spine-pixi-v8";
 import { Container } from "pixi.js";
-import { PixiApp } from "../services/pixi/PixiApp";
-import { SceneController } from "../services/pixi/SceneController";
-import { SpineManager } from "../services/spine/SpineManager";
-import { AnimationController } from "../services/animation/AnimationController";
-import { DragDropHandler } from "../services/io/DragDropHandler";
-import { BenchmarkRunner } from "../services/metrics/BenchmarkRunner";
-import { PerformanceMonitor } from "../services/metrics/PerformanceMonitor";
-import { attachAtlasRenderPasses, buildAtlasAnalysis } from "../analysis/atlasAnalysis";
-import { buildSpinePerformanceReport } from "../analysis/spinePerformanceReport";
-import type { PerformanceBaseline } from "../analysis/performanceBaseline";
-import type { MessageKey } from "../i18n/messages";
-import type { MessageVars } from "../i18n/types";
+import {
+  attachAtlasRenderPasses,
+  buildAtlasAnalysis,
+  buildSpinePerformanceReport,
+  type PerformanceBaseline,
+} from "../analytics";
 import type {
   BenchmarkUiState,
   PerformanceSnapshot,
   PlaybackMode,
   SpineModel,
-} from "../types/spine";
+} from "../types";
+import type { MessageKey } from "../i18n/messages";
+import type { MessageVars } from "../i18n/types";
+import { SpineBundleParser } from "../import";
+import { BenchmarkRunner, PerformanceMonitor } from "../metrics";
+import { PixiApp, SceneController } from "../pixi";
+import { AnimationController, SpineManager } from "../spine";
 
 const STORAGE_KEY = "spine-preview-state";
 
@@ -214,7 +214,7 @@ export function useSpinePreview() {
   }, []);
 
   const loadFiles = useCallback(async (files: FileList) => {
-    const bundles = DragDropHandler.parseBundles(files);
+    const bundles = SpineBundleParser.parseBundles(files);
     const manager = spineManagerRef.current;
     const animation = animationRef.current;
     const scene = sceneRef.current;

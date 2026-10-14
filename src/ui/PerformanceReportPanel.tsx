@@ -1,16 +1,17 @@
 import { memo, useMemo, useState } from "react";
-import type { AtlasAnalysisReport } from "../analysis/atlasAnalysis";
-import type { ImpactLevel, SpinePerformanceReport } from "../analysis/spinePerformanceReport";
 import {
   impactFromConstraints,
   impactFromVertices,
   summarizeImpactForCompare,
-} from "../analysis/spinePerformanceReport";
+  type AtlasAnalysisReport,
+  type ImpactLevel,
+  type PerformanceBaseline,
+  type SpinePerformanceReport,
+} from "../analytics";
+import type { BenchmarkUiState, SpineModel } from "../types";
 import { useI18n } from "../i18n/useI18n";
 import type { MessageKey } from "../i18n/messages";
 import type { MessageVars } from "../i18n/types";
-import type { PerformanceBaseline } from "../analysis/performanceBaseline";
-import type { BenchmarkUiState, SpineModel } from "../types/spine";
 import { BenchmarkPanel } from "./BenchmarkPanel";
 
 interface PerformanceReportPanelProps {
