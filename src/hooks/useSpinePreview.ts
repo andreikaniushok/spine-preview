@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SpineDebugRenderer } from "@esotericsoftware/spine-pixi-v8";
 import { Container } from "pixi.js";
-import { PixiApp } from "../core/PixiApp";
-import { SceneController } from "../core/SceneController";
-import { SpineManager } from "../spine/SpineManager";
-import { AnimationController } from "../animation/AnimationController";
-import { DragDropHandler } from "../utils/DragDropHandler";
-import { PerformanceMonitor } from "../utils/PerformanceMonitor";
+import { PixiApp } from "../services/pixi/PixiApp";
+import { SceneController } from "../services/pixi/SceneController";
+import { SpineManager } from "../services/spine/SpineManager";
+import { AnimationController } from "../services/animation/AnimationController";
+import { DragDropHandler } from "../services/io/DragDropHandler";
+import { PerformanceMonitor } from "../services/metrics/PerformanceMonitor";
 import { attachAtlasRenderPasses, buildAtlasAnalysis } from "../analysis/atlasAnalysis";
 import { buildSpinePerformanceReport } from "../analysis/spinePerformanceReport";
-import { summarizeBenchmark } from "../utils/benchmarkStats";
-import type { PerformanceBaseline } from "../types/performanceBaseline";
+import { summarizeBenchmark } from "../analysis/benchmarkStats";
+import type { PerformanceBaseline } from "../analysis/performanceBaseline";
 import type { MessageKey } from "../i18n/messages";
 import type { MessageVars } from "../i18n/types";
 import type {

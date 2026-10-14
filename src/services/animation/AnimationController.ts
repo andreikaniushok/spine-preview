@@ -1,4 +1,4 @@
-import type { SpineModel, PlaybackMode } from "../types/spine";
+import type { SpineModel, PlaybackMode } from "../../types/spine";
 
 export interface PlaybackState {
   animation: string | null;

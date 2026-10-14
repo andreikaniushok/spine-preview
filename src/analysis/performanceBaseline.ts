@@ -1,4 +1,4 @@
-import type { SpinePerformanceReport } from "../analysis/spinePerformanceReport";
+import type { SpinePerformanceReport } from "./spinePerformanceReport";
 
 export interface PerformanceBaseline {
   label: string;
