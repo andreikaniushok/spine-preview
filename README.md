@@ -20,7 +20,6 @@ npm run dev
 
 Needs Spine **4.2** exports. Build with `npm run build`.
 
-
 ## License
 
 [MIT](LICENSE)

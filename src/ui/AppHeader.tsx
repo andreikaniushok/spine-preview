@@ -1,17 +1,6 @@
-import {
-  AppBar,
-  Box,
-  FormControl,
-  FormControlLabel,
-  InputLabel,
-  MenuItem,
-  Select,
-  Switch,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import { AppBar, Box, FormControlLabel, Switch, Toolbar, Typography } from "@mui/material";
 import { useI18n } from "../i18n/useI18n";
-import type { Locale, MessageKey } from "../i18n/messages";
+import { SettingsMenu } from "./SettingsMenu";
 
 interface AppHeaderProps {
   theme: "dark" | "light";
@@ -22,14 +11,6 @@ interface AppHeaderProps {
   onMetricsVisibleChange: (visible: boolean) => void;
 }
 
-const locales: Locale[] = ["en", "pl", "ru"];
-
-const localeLabelKey: Record<Locale, MessageKey> = {
-  en: "header.lang_en",
-  pl: "header.lang_pl",
-  ru: "header.lang_ru",
-};
-
 export function AppHeader({
   theme,
   onThemeChange,
@@ -38,7 +19,7 @@ export function AppHeader({
   metricsVisible,
   onMetricsVisibleChange,
 }: AppHeaderProps) {
-  const { locale, setLocale, t } = useI18n();
+  const { t } = useI18n();
 
   return (
     <AppBar
@@ -91,33 +72,6 @@ export function AppHeader({
             flex: { xs: "1 1 100%", sm: "0 1 auto" },
           }}
         >
-          <FormControl sx={{ minWidth: { xs: 96, sm: 120 }, flex: { xs: "1 1 auto", sm: "0 0 auto" } }} size="small">
-            <InputLabel id="app-locale-label">{t("header.language_aria")}</InputLabel>
-            <Select
-              labelId="app-locale-label"
-              label={t("header.language_aria")}
-              value={locale}
-              onChange={(e) => setLocale(e.target.value as Locale)}
-            >
-              {locales.map((code) => (
-                <MenuItem key={code} value={code}>
-                  {t(localeLabelKey[code])}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          <FormControlLabel
-            sx={{ mr: { xs: 0, sm: 1 }, ml: 0 }}
-            control={
-              <Switch
-                checked={theme === "light"}
-                onChange={(e) => onThemeChange(e.target.checked ? "light" : "dark")}
-                slotProps={{ input: { "aria-label": t("header.theme_aria") } }}
-              />
-            }
-            label={theme === "light" ? t("header.theme_light") : t("header.theme_dark")}
-          />
           <FormControlLabel
             sx={{ mr: { xs: 0, sm: 1 }, ml: 0 }}
             control={
@@ -130,7 +84,7 @@ export function AppHeader({
             label={analyticsVisible ? t("header.analytics_on") : t("header.analytics_off")}
           />
           <FormControlLabel
-            sx={{ mr: 0, ml: 0 }}
+            sx={{ mr: { xs: 0, sm: 1 }, ml: 0 }}
             control={
               <Switch
                 checked={metricsVisible}
@@ -140,6 +94,7 @@ export function AppHeader({
             }
             label={metricsVisible ? t("header.metrics_on") : t("header.metrics_off")}
           />
+          <SettingsMenu theme={theme} onThemeChange={onThemeChange} />
         </Box>
       </Toolbar>
     </AppBar>

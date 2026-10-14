@@ -5,6 +5,8 @@ const SKELETON_EXTENSIONS = [".json", ".skel"];
 /**
  * Groups local FileList entries (file picker or drag-and-drop) into Spine asset bundles.
  * No React / Pixi — only file matching by extension and basename.
+ *
+ * Accepts `.atlas` and Windows/Spine export form `.atlas.txt`.
  */
 export class SpineBundleParser {
   public static parseBundles(files: FileList): SpineAssetBundle[] {
@@ -12,7 +14,7 @@ export class SpineBundleParser {
     const skeletonFiles = entries.filter((file) =>
       SKELETON_EXTENSIONS.some((ext) => file.name.toLowerCase().endsWith(ext)),
     );
-    const atlasFiles = entries.filter((file) => file.name.toLowerCase().endsWith(".atlas"));
+    const atlasFiles = entries.filter((file) => SpineBundleParser.isAtlasFile(file.name));
     const textureFiles = entries.filter(
       (file) =>
         file.type.startsWith("image/") ||
@@ -49,7 +51,17 @@ export class SpineBundleParser {
     return bundles;
   }
 
+  private static isAtlasFile(fileName: string): boolean {
+    const lower = fileName.toLowerCase();
+    return lower.endsWith(".atlas.txt") || lower.endsWith(".atlas");
+  }
+
+  /** Strip known compound extensions (`.atlas.txt`) or the last extension. */
   private static baseName(fileName: string): string {
+    const lower = fileName.toLowerCase();
+    if (lower.endsWith(".atlas.txt")) {
+      return fileName.slice(0, -".atlas.txt".length);
+    }
     const parts = fileName.split(".");
     parts.pop();
     return parts.join(".");

@@ -19,6 +19,15 @@ export const enMessages = {
   "header.metrics_on": "Metrics",
   "header.metrics_off": "Metrics",
 
+  "settings.aria": "Open settings",
+  "settings.title": "Settings",
+  "settings.section_interface": "Interface",
+  "settings.section_about": "About",
+  "settings.about_version": "Version {{version}}",
+  "settings.about_desc":
+    "Local web preview for Spine 4.2 animations: load packs, play skins, and inspect performance.",
+  "settings.about_stack": "React · MUI · PixiJS · Spine 4.2",
+
   "scene.select_files": "Select files",
   "scene.select_folder": "Select folder",
   "scene.aria_select_files": "Select Spine files",
@@ -26,12 +35,12 @@ export const enMessages = {
   "scene.fps": "FPS",
   "scene.frame_ms": "Frame",
   "scene.drop_title": "Drop Spine files here:",
-  "scene.drop_hint_sub": ".json/.skel + .atlas + textures",
+  "scene.drop_hint_sub": ".json/.skel + .atlas(.txt) + textures",
 
   "notice.renderer_not_ready": "Renderer is not ready yet. Try again in a second.",
   "notice.no_files": "No files selected.",
   "notice.no_valid_bundle":
-    "No valid Spine bundle found. Need .json/.skel + .atlas + textures.",
+    "No valid Spine bundle found. Need .json/.skel + .atlas (or .atlas.txt) + textures.",
   "notice.bundles_loading": "Found {{count}} bundle(s). Loading…",
   "notice.loaded_ok": "Loaded “{{name}}” successfully.",
   "notice.load_failed": "Failed to load “{{name}}”: {{details}}",

@@ -21,6 +21,15 @@ export const ruMessages: Record<MessageKey, string> = {
   "header.metrics_on": "Метрики",
   "header.metrics_off": "Метрики",
 
+  "settings.aria": "Открыть настройки",
+  "settings.title": "Настройки",
+  "settings.section_interface": "Интерфейс",
+  "settings.section_about": "О приложении",
+  "settings.about_version": "Версия {{version}}",
+  "settings.about_desc":
+    "Локальный веб-превью для анимаций Spine 4.2: загрузка пакетов, скины и анализ производительности.",
+  "settings.about_stack": "React · MUI · PixiJS · Spine 4.2",
+
   "scene.select_files": "Выбрать файлы",
   "scene.select_folder": "Выбрать папку",
   "scene.aria_select_files": "Выбрать файлы Spine",
@@ -28,12 +37,12 @@ export const ruMessages: Record<MessageKey, string> = {
   "scene.fps": "FPS",
   "scene.frame_ms": "Кадр",
   "scene.drop_title": "Перетащите файлы Spine сюда:",
-  "scene.drop_hint_sub": ".json/.skel + .atlas + текстуры",
+  "scene.drop_hint_sub": ".json/.skel + .atlas(.txt) + текстуры",
 
   "notice.renderer_not_ready": "Рендерер ещё не готов. Повторите через секунду.",
   "notice.no_files": "Файлы не выбраны.",
   "notice.no_valid_bundle":
-    "Подходящий пакет Spine не найден. Нужны: .json/.skel + .atlas + текстуры.",
+    "Подходящий пакет Spine не найден. Нужны: .json/.skel + .atlas (или .atlas.txt) + текстуры.",
   "notice.bundles_loading": "Найдено пакетов: {{count}}. Загрузка…",
   "notice.loaded_ok": "«{{name}}» успешно загружен.",
   "notice.load_failed": "Не удалось загрузить «{{name}}»: {{details}}",
