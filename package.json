@@ -10,8 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
     "@esotericsoftware/spine-core": "4.2.108",
     "@esotericsoftware/spine-pixi-v8": "^4.2.108",
+    "@mui/icons-material": "^9.5.0",
+    "@mui/material": "^9.5.0",
     "pixi.js": "^8.17.1",
     "react": "^19.2.4",
     "react-dom": "^19.2.4"
