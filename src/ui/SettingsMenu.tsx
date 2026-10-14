@@ -16,6 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import { useState } from "react";
+import { APP_AUTHOR, APP_VERSION, APP_YEAR } from "../app/version";
 import { useI18n } from "../i18n/useI18n";
 import type { Locale, MessageKey } from "../i18n/messages";
 
@@ -31,11 +32,6 @@ const localeLabelKey: Record<Locale, MessageKey> = {
   pl: "header.lang_pl",
   ru: "header.lang_ru",
 };
-
-/** Keep in sync with package.json version. */
-const APP_VERSION = "0.0.0";
-const APP_AUTHOR = "@andreikaniushok";
-const APP_YEAR = 2026;
 
 export function SettingsMenu({ theme, onThemeChange }: SettingsMenuProps) {
   const { locale, setLocale, t } = useI18n();
