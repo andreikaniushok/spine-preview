@@ -21,6 +21,15 @@ export const plMessages: Record<MessageKey, string> = {
   "header.metrics_on": "Metryki",
   "header.metrics_off": "Metryki",
 
+  "settings.aria": "Otwórz ustawienia",
+  "settings.title": "Ustawienia",
+  "settings.section_interface": "Interfejs",
+  "settings.section_about": "O aplikacji",
+  "settings.about_version": "Wersja {{version}}",
+  "settings.about_desc":
+    "Lokalny podgląd webowy animacji Spine 4.2: wczytywanie pakietów, skórki i analiza wydajności.",
+  "settings.about_stack": "React · MUI · PixiJS · Spine 4.2",
+
   "scene.select_files": "Wybierz pliki",
   "scene.select_folder": "Wybierz folder",
   "scene.aria_select_files": "Wybierz pliki Spine",

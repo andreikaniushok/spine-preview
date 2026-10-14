@@ -21,6 +21,15 @@ export const ruMessages: Record<MessageKey, string> = {
   "header.metrics_on": "Метрики",
   "header.metrics_off": "Метрики",
 
+  "settings.aria": "Открыть настройки",
+  "settings.title": "Настройки",
+  "settings.section_interface": "Интерфейс",
+  "settings.section_about": "О приложении",
+  "settings.about_version": "Версия {{version}}",
+  "settings.about_desc":
+    "Локальный веб-превью для анимаций Spine 4.2: загрузка пакетов, скины и анализ производительности.",
+  "settings.about_stack": "React · MUI · PixiJS · Spine 4.2",
+
   "scene.select_files": "Выбрать файлы",
   "scene.select_folder": "Выбрать папку",
   "scene.aria_select_files": "Выбрать файлы Spine",

@@ -19,6 +19,15 @@ export const enMessages = {
   "header.metrics_on": "Metrics",
   "header.metrics_off": "Metrics",
 
+  "settings.aria": "Open settings",
+  "settings.title": "Settings",
+  "settings.section_interface": "Interface",
+  "settings.section_about": "About",
+  "settings.about_version": "Version {{version}}",
+  "settings.about_desc":
+    "Local web preview for Spine 4.2 animations: load packs, play skins, and inspect performance.",
+  "settings.about_stack": "React · MUI · PixiJS · Spine 4.2",
+
   "scene.select_files": "Select files",
   "scene.select_folder": "Select folder",
   "scene.aria_select_files": "Select Spine files",
