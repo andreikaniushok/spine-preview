@@ -1,15 +1,19 @@
 /* Pixi host + a11y file inputs (layout is MUI sx / grid areas). */
 
 .pixi-host {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   min-height: 180px;
+  overflow: hidden;
 }
 
+/* Do not force CSS size — Pixi resizeTo matches the buffer to the host.
+   width/height: 100% !important squashes the scene when the host aspect changes
+   (e.g. analytics panel opens) before/while the renderer catches up. */
 .pixi-host canvas {
   display: block;
-  width: 100% !important;
-  height: 100% !important;
 }
 
 .sr-only {
