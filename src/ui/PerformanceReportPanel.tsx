@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography } from "@mui/material";
+import { Box, Paper, Stack, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { memo, useMemo } from "react";
 import type { AtlasAnalysisReport, SkeletonStructureStats } from "../analytics";
 import type { PerformanceSnapshot, SpineModel } from "../types";
@@ -25,22 +25,12 @@ function formatMemory(bytes: number | null | undefined): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-const panelSx = {
-  gridArea: "analytics",
-  borderLeft: { xs: 0, md: 1 },
-  borderTop: { xs: 1, md: 0 },
-  borderColor: "divider",
-  p: { xs: 1.25, md: 2 },
-  overflowY: "auto",
-  WebkitOverflowScrolling: "touch",
-  minHeight: 0,
-  height: "100%",
-  bgcolor: "background.paper",
-} as const;
-
 function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
   const { metrics, structure, atlasReport, activeModel, modelCount, drawCalls } = props;
   const { t } = useI18n();
+  const theme = useTheme();
+  // Bottom sheet only on phones; sm+ uses the normal grid column (no overlay clip zone).
+  const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
 
   const liveItems = useMemo(
     () => [
@@ -90,94 +80,178 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
   );
 
   return (
-    <Paper component="aside" square sx={panelSx}>
-      <Stack spacing={2.5}>
-        <Stack spacing={0.5}>
-          <Typography variant="h6">{t("perf.title")}</Typography>
-          <Typography variant="body2" color="text.secondary">
-            {activeModel
-              ? t("perf.active_model", { name: activeModel.name })
-              : t("perf.empty")}
-          </Typography>
-        </Stack>
+    <Paper
+      component="aside"
+      square
+      elevation={0}
+      sx={
+        isPhone
+          ? {
+              position: "fixed",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 40,
+              width: "100%",
+              maxWidth: "100%",
+              height: "min(36dvh, 240px)",
+              maxHeight: "min(36dvh, 240px)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              borderTop: 1,
+              borderColor: "divider",
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
+              boxShadow: "0 -4px 24px rgba(0,0,0,0.25)",
+              bgcolor: "background.paper",
+              pb: "env(safe-area-inset-bottom, 0px)",
+            }
+          : {
+              gridArea: "analytics",
+              position: "static",
+              width: "100%",
+              maxWidth: "100%",
+              minWidth: 0,
+              minHeight: 0,
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              borderLeft: 1,
+              borderTop: 0,
+              borderColor: "divider",
+              borderRadius: 0,
+              boxShadow: "none",
+              bgcolor: "background.paper",
+            }
+      }
+    >
+      <Box
+        sx={{
+          flexShrink: 0,
+          px: { xs: 1.25, md: 2 },
+          pt: { xs: 1.25, md: 2 },
+          pb: 1,
+          borderBottom: 1,
+          borderColor: "divider",
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ fontSize: { xs: "1rem", md: "1.25rem" }, lineHeight: 1.3 }}
+        >
+          {t("perf.title")}
+        </Typography>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            mt: 0.25,
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {activeModel
+            ? t("perf.active_model", { name: activeModel.name })
+            : t("perf.empty")}
+        </Typography>
+      </Box>
 
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">{t("perf.live_metrics")}</Typography>
-          <KvGrid items={liveItems} />
-        </Stack>
+      <Box
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          minWidth: 0,
+          overflowY: "auto",
+          overflowX: "hidden",
+          WebkitOverflowScrolling: "touch",
+          overscrollBehavior: "contain",
+          px: { xs: 1.25, md: 2 },
+          pt: 1.5,
+          pb: 2,
+        }}
+      >
+        <Stack spacing={{ xs: 1.75, md: 2.5 }} sx={{ width: "100%", minWidth: 0 }}>
+          <Stack spacing={1}>
+            <Typography variant="subtitle2">{t("perf.live_metrics")}</Typography>
+            <KvGrid items={liveItems} />
+          </Stack>
 
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">{t("perf.structure")}</Typography>
-          <KvGrid items={structureItems} />
-        </Stack>
+          <Stack spacing={1}>
+            <Typography variant="subtitle2">{t("perf.structure")}</Typography>
+            <KvGrid items={structureItems} />
+          </Stack>
 
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">{t("perf.text_bones_title")}</Typography>
-          <Typography variant="caption" color="text.secondary">
-            {t("perf.text_bones_hint")}
-          </Typography>
-          {boneRows.length > 0 ? (
-            <DataTable
-              columns={[
-                { id: "name", label: t("perf.bone_name") },
-                { id: "parent", label: t("perf.bone_parent") },
-                { id: "len", label: t("perf.bone_length"), align: "right" },
-                { id: "leaf", label: t("perf.bone_leaf") },
-              ]}
-              rows={boneRows}
-            />
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              {t("perf.text_bones_empty")}
+          <Stack spacing={1} sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle2">{t("perf.text_bones_title")}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {t("perf.text_bones_hint")}
             </Typography>
-          )}
-        </Stack>
-
-        <Stack spacing={1}>
-          <Typography variant="subtitle2">{t("perf.atlas_memory_title")}</Typography>
-          <Typography variant="caption" color="text.secondary">
-            {t("perf.atlas_memory_hint")}
-          </Typography>
-          {atlasReport?.parseError ? (
-            <Typography variant="body2" color="error">
-              {atlasReport.parseError}
-            </Typography>
-          ) : atlasRows.length > 0 ? (
-            <Stack spacing={1}>
-              <KvGrid
-                items={[
-                  {
-                    label: t("perf.atlas_memory_total"),
-                    value: formatMemory(atlasReport?.totalEstimatedMemoryBytes),
-                  },
-                  {
-                    label: t("perf.atlas_pages"),
-                    value: atlasReport?.totalPages ?? 0,
-                  },
-                ]}
-              />
+            {boneRows.length > 0 ? (
               <DataTable
                 columns={[
-                  { id: "file", label: t("perf.texture") },
-                  { id: "size", label: t("perf.size") },
-                  { id: "regions", label: t("perf.regions"), align: "right" },
-                  { id: "ram", label: t("perf.atlas_ram"), align: "right" },
-                  { id: "mips", label: t("perf.atlas_mipmaps") },
+                  { id: "name", label: t("perf.bone_name") },
+                  { id: "parent", label: t("perf.bone_parent") },
+                  { id: "len", label: t("perf.bone_length"), align: "right" },
+                  { id: "leaf", label: t("perf.bone_leaf") },
                 ]}
-                rows={atlasRows}
+                rows={boneRows}
               />
-            </Stack>
-          ) : (
-            <Typography variant="body2" color="text.secondary">
-              {t("perf.atlas_memory_empty")}
-            </Typography>
-          )}
-        </Stack>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                {t("perf.text_bones_empty")}
+              </Typography>
+            )}
+          </Stack>
 
-        <Typography variant="caption" color="text.secondary">
-          {t("perf.footer")}
-        </Typography>
-      </Stack>
+          <Stack spacing={1} sx={{ minWidth: 0 }}>
+            <Typography variant="subtitle2">{t("perf.atlas_memory_title")}</Typography>
+            <Typography variant="caption" color="text.secondary">
+              {t("perf.atlas_memory_hint")}
+            </Typography>
+            {atlasReport?.parseError ? (
+              <Typography variant="body2" color="error">
+                {atlasReport.parseError}
+              </Typography>
+            ) : atlasRows.length > 0 ? (
+              <Stack spacing={1} sx={{ minWidth: 0 }}>
+                <KvGrid
+                  items={[
+                    {
+                      label: t("perf.atlas_memory_total"),
+                      value: formatMemory(atlasReport?.totalEstimatedMemoryBytes),
+                    },
+                    {
+                      label: t("perf.atlas_pages"),
+                      value: atlasReport?.totalPages ?? 0,
+                    },
+                  ]}
+                />
+                <DataTable
+                  columns={[
+                    { id: "file", label: t("perf.texture") },
+                    { id: "size", label: t("perf.size") },
+                    { id: "regions", label: t("perf.regions"), align: "right" },
+                    { id: "ram", label: t("perf.atlas_ram"), align: "right" },
+                    { id: "mips", label: t("perf.atlas_mipmaps") },
+                  ]}
+                  rows={atlasRows}
+                />
+              </Stack>
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                {t("perf.atlas_memory_empty")}
+              </Typography>
+            )}
+          </Stack>
+
+          <Typography variant="caption" color="text.secondary">
+            {t("perf.footer")}
+          </Typography>
+        </Stack>
+      </Box>
     </Paper>
   );
 }

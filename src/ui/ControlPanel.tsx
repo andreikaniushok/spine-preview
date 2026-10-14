@@ -158,8 +158,8 @@ export function ControlPanel(props: ControlPanelProps) {
               return selected;
             }}
             MenuProps={{
-              PaperProps: {
-                sx: { maxHeight: "50dvh" },
+              slotProps: {
+                paper: { sx: { maxHeight: "50dvh" } },
               },
             }}
           >

@@ -40,22 +40,23 @@ function App() {
           overflow: "hidden",
           bgcolor: "background.default",
           gridTemplateColumns: {
+            // Phones: single column. sm+ desktop/tablet: side panels in the grid (no overlay).
             xs: "minmax(0, 1fr)",
+            sm: isAnalyticsVisible
+              ? "minmax(200px, 260px) minmax(0, 1fr) minmax(240px, 420px)"
+              : "minmax(200px, 280px) minmax(0, 1fr)",
             md: isAnalyticsVisible
               ? "minmax(240px, 300px) minmax(0, 1fr) minmax(280px, 520px)"
               : "minmax(240px, 300px) minmax(0, 1fr)",
           },
           gridTemplateRows: {
-            xs: isAnalyticsVisible
-              ? "auto minmax(0, 34dvh) minmax(0, 1fr) minmax(0, 32dvh)"
-              : "auto minmax(0, 38dvh) minmax(0, 1fr)",
-            md: "auto 1fr",
+            xs: "auto minmax(0, 34dvh) minmax(0, 1fr)",
+            sm: "auto 1fr",
           },
           gridTemplateAreas: {
-            xs: isAnalyticsVisible
-              ? `"header" "controls" "scene" "analytics"`
-              : `"header" "controls" "scene"`,
-            md: isAnalyticsVisible
+            // Phone analytics is a fixed sheet (not in the grid). sm+ uses a real column.
+            xs: `"header" "controls" "scene"`,
+            sm: isAnalyticsVisible
               ? `"header header header" "controls scene analytics"`
               : `"header header" "controls scene"`,
           },
