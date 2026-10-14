@@ -11,6 +11,7 @@ import type { MessageKey } from "../i18n/messages";
 import type { MessageVars } from "../i18n/types";
 import type { PerformanceBaseline } from "../analysis/performanceBaseline";
 import type { BenchmarkUiState, SpineModel } from "../types/spine";
+import { BenchmarkPanel } from "./BenchmarkPanel";
 
 interface PerformanceReportPanelProps {
   report: SpinePerformanceReport | null;
@@ -68,9 +69,16 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
     onClearBaseline,
   } = props;
   const { t } = useI18n();
-  const [benchmarkDurationSec, setBenchmarkDurationSec] = useState<number>(5);
   const [largestRegionsOpen, setLargestRegionsOpen] = useState(false);
-  const isBenchmarkRunning = benchmark.status === "running";
+
+  const benchmarkPanel = (
+    <BenchmarkPanel
+      state={benchmark}
+      onStart={onBenchmarkStart}
+      onStop={onBenchmarkStop}
+      onClear={onBenchmarkClear}
+    />
+  );
 
   const atlasPagesRows = useMemo(
     () =>
@@ -344,93 +352,7 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
             </>
           )}
         </section>
-        <section className="perf-section benchmark-section">
-          <h3>{t("control.benchmark")}</h3>
-          <p className="benchmark-hint">{t("control.benchmark_hint")}</p>
-          <div className="perf-controls-row">
-            <label>{t("control.duration")}</label>
-            <select
-              aria-label={t("control.duration")}
-              value={benchmarkDurationSec}
-              disabled={isBenchmarkRunning}
-              onChange={(e) => setBenchmarkDurationSec(Number(e.target.value))}
-            >
-              {[3, 5, 10, 30].map((sec) => (
-                <option key={sec} value={sec}>
-                  {sec}s
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="perf-controls-row benchmark-actions">
-            {!isBenchmarkRunning ? (
-              <button type="button" onClick={() => onBenchmarkStart(benchmarkDurationSec)}>
-                {t("control.start")}
-              </button>
-            ) : (
-              <button type="button" onClick={onBenchmarkStop}>
-                {t("control.stop_early")}
-              </button>
-            )}
-          </div>
-          {benchmark.status === "running" && (
-            <div className="benchmark-progress" role="status" aria-live="polite">
-              <div className="benchmark-progress-track">
-                <div
-                  className="benchmark-progress-fill"
-                  style={{ width: `${Math.round(benchmark.progress * 100)}%` }}
-                />
-              </div>
-              <span className="benchmark-progress-label">
-                {t("control.recording", { pct: Math.round(benchmark.progress * 100) })}
-              </span>
-            </div>
-          )}
-          {benchmark.status === "done" && (
-            <div className="benchmark-results">
-              <dl className="benchmark-stats">
-                <div>
-                  <dt>{t("control.frames")}</dt>
-                  <dd>{benchmark.result.frameCount}</dd>
-                </div>
-                <div>
-                  <dt>{t("control.wall_time")}</dt>
-                  <dd>{(benchmark.result.wallDurationMs / 1000).toFixed(2)} s</dd>
-                </div>
-                <div>
-                  <dt>{t("control.mean_fps")}</dt>
-                  <dd>{benchmark.result.meanFps.toFixed(1)}</dd>
-                </div>
-                <div>
-                  <dt>{t("control.frame_ms_avg")}</dt>
-                  <dd>{benchmark.result.frameTimeMs.mean.toFixed(2)}</dd>
-                </div>
-                <div>
-                  <dt>{t("control.frame_ms_p50")}</dt>
-                  <dd>{benchmark.result.frameTimeMs.p50.toFixed(2)}</dd>
-                </div>
-                <div>
-                  <dt>{t("control.frame_ms_p95")}</dt>
-                  <dd>{benchmark.result.frameTimeMs.p95.toFixed(2)}</dd>
-                </div>
-                <div>
-                  <dt>{t("control.frame_ms_p99")}</dt>
-                  <dd>{benchmark.result.frameTimeMs.p99.toFixed(2)}</dd>
-                </div>
-                <div>
-                  <dt>{t("control.frame_ms_minmax")}</dt>
-                  <dd>
-                    {benchmark.result.frameTimeMs.min.toFixed(2)} –{" "}
-                    {benchmark.result.frameTimeMs.max.toFixed(2)}
-                  </dd>
-                </div>
-              </dl>
-              <button type="button" className="benchmark-clear" onClick={onBenchmarkClear}>
-                {t("control.clear_results")}
-              </button>
-            </div>
-          )}
-        </section>
+        {benchmarkPanel}
         <p className="performance-muted">{t("perf.empty")}</p>
       </aside>
     );
@@ -641,93 +563,7 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
         )}
       </section>
 
-      <section className="perf-section benchmark-section">
-        <h3>{t("control.benchmark")}</h3>
-        <p className="benchmark-hint">{t("control.benchmark_hint")}</p>
-        <div className="perf-controls-row">
-          <label>{t("control.duration")}</label>
-          <select
-            aria-label={t("control.duration")}
-            value={benchmarkDurationSec}
-            disabled={isBenchmarkRunning}
-            onChange={(e) => setBenchmarkDurationSec(Number(e.target.value))}
-          >
-            {[3, 5, 10, 30].map((sec) => (
-              <option key={sec} value={sec}>
-                {sec}s
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="perf-controls-row benchmark-actions">
-          {!isBenchmarkRunning ? (
-            <button type="button" onClick={() => onBenchmarkStart(benchmarkDurationSec)}>
-              {t("control.start")}
-            </button>
-          ) : (
-            <button type="button" onClick={onBenchmarkStop}>
-              {t("control.stop_early")}
-            </button>
-          )}
-        </div>
-        {benchmark.status === "running" && (
-          <div className="benchmark-progress" role="status" aria-live="polite">
-            <div className="benchmark-progress-track">
-              <div
-                className="benchmark-progress-fill"
-                style={{ width: `${Math.round(benchmark.progress * 100)}%` }}
-              />
-            </div>
-            <span className="benchmark-progress-label">
-              {t("control.recording", { pct: Math.round(benchmark.progress * 100) })}
-            </span>
-          </div>
-        )}
-        {benchmark.status === "done" && (
-          <div className="benchmark-results">
-            <dl className="benchmark-stats">
-              <div>
-                <dt>{t("control.frames")}</dt>
-                <dd>{benchmark.result.frameCount}</dd>
-              </div>
-              <div>
-                <dt>{t("control.wall_time")}</dt>
-                <dd>{(benchmark.result.wallDurationMs / 1000).toFixed(2)} s</dd>
-              </div>
-              <div>
-                <dt>{t("control.mean_fps")}</dt>
-                <dd>{benchmark.result.meanFps.toFixed(1)}</dd>
-              </div>
-              <div>
-                <dt>{t("control.frame_ms_avg")}</dt>
-                <dd>{benchmark.result.frameTimeMs.mean.toFixed(2)}</dd>
-              </div>
-              <div>
-                <dt>{t("control.frame_ms_p50")}</dt>
-                <dd>{benchmark.result.frameTimeMs.p50.toFixed(2)}</dd>
-              </div>
-              <div>
-                <dt>{t("control.frame_ms_p95")}</dt>
-                <dd>{benchmark.result.frameTimeMs.p95.toFixed(2)}</dd>
-              </div>
-              <div>
-                <dt>{t("control.frame_ms_p99")}</dt>
-                <dd>{benchmark.result.frameTimeMs.p99.toFixed(2)}</dd>
-              </div>
-              <div>
-                <dt>{t("control.frame_ms_minmax")}</dt>
-                <dd>
-                  {benchmark.result.frameTimeMs.min.toFixed(2)} –{" "}
-                  {benchmark.result.frameTimeMs.max.toFixed(2)}
-                </dd>
-              </div>
-            </dl>
-            <button type="button" className="benchmark-clear" onClick={onBenchmarkClear}>
-              {t("control.clear_results")}
-            </button>
-          </div>
-        )}
-      </section>
+      {benchmarkPanel}
 
       <section className="perf-section">
         <h3>{t("perf.rendering_impact")}</h3>

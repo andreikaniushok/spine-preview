@@ -696,6 +696,94 @@
   font-size: 14px;
 }
 
+/* —— Reusable UI primitives —— */
+.ui-field-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.ui-field-row label {
+  min-width: 70px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.ui-field-row > * {
+  min-width: 0;
+}
+
+.ui-btn-secondary {
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--select-border));
+}
+
+.ui-btn-ghost {
+  background: transparent;
+  border-style: dashed;
+  opacity: 0.9;
+}
+
+.ui-btn-ghost:hover:not(:disabled) {
+  background-color: var(--select-bg-hover);
+  opacity: 1;
+}
+
+.ui-progress {
+  margin-top: 10px;
+}
+
+.ui-progress-track {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--select-bg);
+  border: 1px solid var(--select-border);
+  overflow: hidden;
+}
+
+.ui-progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: inherit;
+  transition: width 0.12s ease-out;
+}
+
+.ui-progress-label {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.ui-stat-grid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+  font-size: 13px;
+}
+
+.ui-stat-grid > div {
+  min-width: 0;
+}
+
+.ui-stat-grid dt {
+  margin: 0;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: normal;
+}
+
+.ui-stat-grid dd {
+  margin: 2px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.ui-stat-grid .ui-stat-wide {
+  grid-column: 1 / -1;
+}
+
+/* —— Benchmark section layout —— */
 .benchmark-hint {
   margin: 0 0 4px;
   font-size: 12px;
@@ -707,62 +795,8 @@
   margin-top: 8px;
 }
 
-.benchmark-progress {
-  margin-top: 10px;
-}
-
-.benchmark-progress-track {
-  height: 6px;
-  border-radius: 999px;
-  background: var(--select-bg);
-  border: 1px solid var(--select-border);
-  overflow: hidden;
-}
-
-.benchmark-progress-fill {
-  height: 100%;
-  background: var(--accent);
-  border-radius: inherit;
-  transition: width 0.12s ease-out;
-}
-
-.benchmark-progress-label {
-  display: block;
-  margin-top: 6px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
 .benchmark-results {
   margin-top: 10px;
-}
-
-.benchmark-stats {
-  margin: 0;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px 12px;
-  font-size: 13px;
-}
-
-.benchmark-stats div {
-  min-width: 0;
-}
-
-.benchmark-stats dt {
-  margin: 0;
-  font-size: 11px;
-  color: var(--muted);
-  font-weight: normal;
-}
-
-.benchmark-stats dd {
-  margin: 2px 0 0;
-  font-variant-numeric: tabular-nums;
-}
-
-.benchmark-stats > div:last-of-type {
-  grid-column: 1 / -1;
 }
 
 .benchmark-clear {

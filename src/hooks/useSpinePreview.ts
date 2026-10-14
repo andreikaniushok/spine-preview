@@ -6,10 +6,10 @@ import { SceneController } from "../services/pixi/SceneController";
 import { SpineManager } from "../services/spine/SpineManager";
 import { AnimationController } from "../services/animation/AnimationController";
 import { DragDropHandler } from "../services/io/DragDropHandler";
+import { BenchmarkRunner } from "../services/metrics/BenchmarkRunner";
 import { PerformanceMonitor } from "../services/metrics/PerformanceMonitor";
 import { attachAtlasRenderPasses, buildAtlasAnalysis } from "../analysis/atlasAnalysis";
 import { buildSpinePerformanceReport } from "../analysis/spinePerformanceReport";
-import { summarizeBenchmark } from "../analysis/benchmarkStats";
 import type { PerformanceBaseline } from "../analysis/performanceBaseline";
 import type { MessageKey } from "../i18n/messages";
 import type { MessageVars } from "../i18n/types";
@@ -64,14 +64,7 @@ export function useSpinePreview() {
   const spineManagerRef = useRef<SpineManager | null>(null);
   const animationRef = useRef<AnimationController | null>(null);
   const metricsRef = useRef<PerformanceMonitor | null>(null);
-  const benchmarkRef = useRef({
-    active: false,
-    durationMs: 10_000,
-    samples: [] as number[],
-    startAt: 0,
-    stopRequested: false,
-  });
-  const benchmarkProgressEmitRef = useRef(0);
+  const benchmarkRunnerRef = useRef(new BenchmarkRunner());
   const metricsEmitRef = useRef(0);
 
   const [models, setModels] = useState<SpineModel[]>([]);
@@ -203,24 +196,12 @@ export function useSpinePreview() {
           setAtlasLiveTick((n) => n + 1);
         }
 
-        const bench = benchmarkRef.current;
-        if (bench.active && current) {
-          bench.samples.push(current.frameTimeMs);
-          const elapsed = performance.now() - bench.startAt;
-          const progress = Math.min(1, elapsed / bench.durationMs);
-          const emitNow = performance.now();
-          if (emitNow - benchmarkProgressEmitRef.current > 120) {
-            benchmarkProgressEmitRef.current = emitNow;
-            setBenchmark({ status: "running", progress });
-          }
-
-          if (elapsed >= bench.durationMs || bench.stopRequested) {
-            bench.active = false;
-            bench.stopRequested = false;
-            const result = summarizeBenchmark(bench.samples, elapsed);
-            bench.samples = [];
-            benchmarkProgressEmitRef.current = 0;
-            setBenchmark({ status: "done", result });
+        if (current) {
+          const tickResult = benchmarkRunnerRef.current.tick(current.frameTimeMs);
+          if (tickResult.kind === "running" && tickResult.shouldEmitProgress) {
+            setBenchmark({ status: "running", progress: tickResult.progress });
+          } else if (tickResult.kind === "finished") {
+            setBenchmark({ status: "done", result: tickResult.result });
           }
         }
       });
@@ -371,16 +352,9 @@ export function useSpinePreview() {
         pushNotice("error", "notice.renderer_not_ready");
         return;
       }
-      if (benchmarkRef.current.active) {
+      if (!benchmarkRunnerRef.current.start(durationSec)) {
         return;
       }
-      const bench = benchmarkRef.current;
-      bench.active = true;
-      bench.durationMs = Math.max(1, durationSec) * 1000;
-      bench.samples = [];
-      bench.startAt = performance.now();
-      bench.stopRequested = false;
-      benchmarkProgressEmitRef.current = 0;
       setBenchmark({ status: "running", progress: 0 });
       pushNotice("info", "notice.benchmark_started", { seconds: durationSec });
     },
@@ -388,13 +362,11 @@ export function useSpinePreview() {
   );
 
   const stopBenchmark = useCallback(() => {
-    if (!benchmarkRef.current.active) {
-      return;
-    }
-    benchmarkRef.current.stopRequested = true;
+    benchmarkRunnerRef.current.requestStop();
   }, []);
 
   const clearBenchmark = useCallback(() => {
+    benchmarkRunnerRef.current.reset();
     setBenchmark({ status: "idle" });
   }, []);
 
