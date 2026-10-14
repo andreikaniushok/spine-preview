@@ -1,4 +1,4 @@
-import type { SpineAssetBundle } from "../types/spine";
+import type { SpineAssetBundle } from "../../types/spine";
 
 const SKELETON_EXTENSIONS = [".json", ".skel"];
 

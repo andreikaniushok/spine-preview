@@ -9,7 +9,7 @@ import {
 import { useI18n } from "../i18n/useI18n";
 import type { MessageKey } from "../i18n/messages";
 import type { MessageVars } from "../i18n/types";
-import type { PerformanceBaseline } from "../types/performanceBaseline";
+import type { PerformanceBaseline } from "../analysis/performanceBaseline";
 import type { BenchmarkUiState, SpineModel } from "../types/spine";
 
 interface PerformanceReportPanelProps {

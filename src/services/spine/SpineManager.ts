@@ -1,6 +1,6 @@
 import { Spine } from "@esotericsoftware/spine-pixi-v8";
 import { Assets, Cache, Container } from "pixi.js";
-import type { SpineAssetBundle, SpineModel } from "../types/spine";
+import type { SpineAssetBundle, SpineModel } from "../../types/spine";
 
 export interface ISpineManager {
   readonly models: SpineModel[];
