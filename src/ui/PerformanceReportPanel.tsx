@@ -25,26 +25,50 @@ function formatMemory(bytes: number | null | undefined): string {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
-  const { metrics, structure, atlasReport, activeModel, modelCount, drawCalls } = props;
+/** Isolated so FPS ticks don't rebuild bone/atlas tables. */
+const LiveMetricsSection = memo(function LiveMetricsSection({
+  metrics,
+  drawCalls,
+  loadTimeMs,
+}: {
+  metrics: PerformanceSnapshot;
+  drawCalls: number | null;
+  loadTimeMs: number | null;
+}) {
   const { t } = useI18n();
-  const theme = useTheme();
-  // Bottom sheet only on phones; sm+ uses the normal grid column (no overlay clip zone).
-  const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
-
-  const liveItems = useMemo(
+  const items = useMemo(
     () => [
-      { label: t("perf.avg_fps"), value: metrics.avgFps.toFixed(1) },
-      { label: t("perf.avg_frame_time"), value: formatMs(metrics.avgFrameTimeMs) },
+      // Same fields/rounding as the scene HUD — not a separate rolling average.
+      { label: t("scene.fps"), value: metrics.fps.toFixed(0) },
+      { label: t("scene.frame_ms"), value: formatMs(metrics.frameTimeMs) },
       { label: t("perf.draw_calls"), value: drawCalls ?? "—" },
       { label: t("perf.memory"), value: formatMemory(metrics.memoryBytes) },
       {
         label: t("perf.load_time"),
-        value: activeModel ? formatMs(activeModel.loadTimeMs) : "—",
+        value: loadTimeMs == null ? "—" : formatMs(loadTimeMs),
       },
     ],
-    [metrics, drawCalls, activeModel, t],
+    [metrics, drawCalls, loadTimeMs, t],
   );
+
+  return (
+    <Stack spacing={1}>
+      <Typography variant="subtitle2">{t("perf.live_metrics")}</Typography>
+      <KvGrid items={items} />
+    </Stack>
+  );
+});
+
+const StaticAnalyticsSections = memo(function StaticAnalyticsSections({
+  structure,
+  atlasReport,
+  modelCount,
+}: {
+  structure: SkeletonStructureStats | null;
+  atlasReport: AtlasAnalysisReport | null;
+  modelCount: number;
+}) {
+  const { t } = useI18n();
 
   const structureItems = useMemo(
     () => [
@@ -78,6 +102,89 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
       ]) ?? [],
     [atlasReport?.pages, t],
   );
+
+    return (
+    <>
+      <Stack spacing={1}>
+        <Typography variant="subtitle2">{t("perf.structure")}</Typography>
+        <KvGrid items={structureItems} />
+      </Stack>
+
+      <Stack spacing={1} sx={{ minWidth: 0 }}>
+        <Typography variant="subtitle2">{t("perf.text_bones_title")}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {t("perf.text_bones_hint")}
+        </Typography>
+        {boneRows.length > 0 ? (
+          <DataTable
+            columns={[
+              { id: "name", label: t("perf.bone_name") },
+              { id: "parent", label: t("perf.bone_parent") },
+              { id: "len", label: t("perf.bone_length"), align: "right" },
+              { id: "leaf", label: t("perf.bone_leaf") },
+            ]}
+            rows={boneRows}
+          />
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            {t("perf.text_bones_empty")}
+          </Typography>
+        )}
+      </Stack>
+
+      <Stack spacing={1} sx={{ minWidth: 0 }}>
+        <Typography variant="subtitle2">{t("perf.atlas_memory_title")}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {t("perf.atlas_memory_hint")}
+        </Typography>
+        {atlasReport?.parseError ? (
+          <Typography variant="body2" color="error">
+            {atlasReport.parseError}
+          </Typography>
+        ) : atlasRows.length > 0 ? (
+          <Stack spacing={1} sx={{ minWidth: 0 }}>
+            <KvGrid
+              items={[
+                {
+                  label: t("perf.atlas_memory_total"),
+                  value: formatMemory(atlasReport?.totalEstimatedMemoryBytes),
+                },
+                {
+                  label: t("perf.atlas_pages"),
+                  value: atlasReport?.totalPages ?? 0,
+                },
+              ]}
+            />
+            <DataTable
+              columns={[
+                { id: "file", label: t("perf.texture") },
+                { id: "size", label: t("perf.size") },
+                { id: "regions", label: t("perf.regions"), align: "right" },
+                { id: "ram", label: t("perf.atlas_ram"), align: "right" },
+                { id: "mips", label: t("perf.atlas_mipmaps") },
+              ]}
+              rows={atlasRows}
+            />
+          </Stack>
+        ) : (
+          <Typography variant="body2" color="text.secondary">
+            {t("perf.atlas_memory_empty")}
+          </Typography>
+        )}
+      </Stack>
+
+      <Typography variant="caption" color="text.secondary">
+        {t("perf.footer")}
+      </Typography>
+    </>
+  );
+});
+
+function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
+  const { metrics, structure, atlasReport, activeModel, modelCount, drawCalls } = props;
+  const { t } = useI18n();
+  const theme = useTheme();
+  const isPhone = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
     <Paper
@@ -174,82 +281,16 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
         }}
       >
         <Stack spacing={{ xs: 1.75, md: 2.5 }} sx={{ width: "100%", minWidth: 0 }}>
-          <Stack spacing={1}>
-            <Typography variant="subtitle2">{t("perf.live_metrics")}</Typography>
-            <KvGrid items={liveItems} />
-          </Stack>
-
-          <Stack spacing={1}>
-            <Typography variant="subtitle2">{t("perf.structure")}</Typography>
-            <KvGrid items={structureItems} />
-          </Stack>
-
-          <Stack spacing={1} sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle2">{t("perf.text_bones_title")}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {t("perf.text_bones_hint")}
-            </Typography>
-            {boneRows.length > 0 ? (
-              <DataTable
-                columns={[
-                  { id: "name", label: t("perf.bone_name") },
-                  { id: "parent", label: t("perf.bone_parent") },
-                  { id: "len", label: t("perf.bone_length"), align: "right" },
-                  { id: "leaf", label: t("perf.bone_leaf") },
-                ]}
-                rows={boneRows}
-              />
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                {t("perf.text_bones_empty")}
-              </Typography>
-            )}
-          </Stack>
-
-          <Stack spacing={1} sx={{ minWidth: 0 }}>
-            <Typography variant="subtitle2">{t("perf.atlas_memory_title")}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {t("perf.atlas_memory_hint")}
-            </Typography>
-            {atlasReport?.parseError ? (
-              <Typography variant="body2" color="error">
-                {atlasReport.parseError}
-              </Typography>
-            ) : atlasRows.length > 0 ? (
-              <Stack spacing={1} sx={{ minWidth: 0 }}>
-                <KvGrid
-                  items={[
-                    {
-                      label: t("perf.atlas_memory_total"),
-                      value: formatMemory(atlasReport?.totalEstimatedMemoryBytes),
-                    },
-                    {
-                      label: t("perf.atlas_pages"),
-                      value: atlasReport?.totalPages ?? 0,
-                    },
-                  ]}
-                />
-                <DataTable
-                  columns={[
-                    { id: "file", label: t("perf.texture") },
-                    { id: "size", label: t("perf.size") },
-                    { id: "regions", label: t("perf.regions"), align: "right" },
-                    { id: "ram", label: t("perf.atlas_ram"), align: "right" },
-                    { id: "mips", label: t("perf.atlas_mipmaps") },
-                  ]}
-                  rows={atlasRows}
-                />
-              </Stack>
-            ) : (
-              <Typography variant="body2" color="text.secondary">
-                {t("perf.atlas_memory_empty")}
-              </Typography>
-            )}
-          </Stack>
-
-          <Typography variant="caption" color="text.secondary">
-            {t("perf.footer")}
-          </Typography>
+          <LiveMetricsSection
+            metrics={metrics}
+            drawCalls={drawCalls}
+            loadTimeMs={activeModel?.loadTimeMs ?? null}
+          />
+          <StaticAnalyticsSections
+            structure={structure}
+            atlasReport={atlasReport}
+            modelCount={modelCount}
+          />
         </Stack>
       </Box>
     </Paper>

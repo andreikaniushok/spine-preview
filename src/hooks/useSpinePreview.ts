@@ -41,7 +41,8 @@ const rendererBackgroundByTheme = {
   dark: "#0d111a",
   light: "#f5f7fb",
 } as const;
-const METRICS_EMIT_INTERVAL_MS = 120;
+/** Slower emits = fewer React re-renders while analytics tables are mounted. */
+const METRICS_EMIT_INTERVAL_MS = 250;
 
 function getPersistedState(): PersistedState {
   const fallback: PersistedState = { speed: 1, mode: "loop", theme: "dark" };
@@ -90,7 +91,6 @@ export function useSpinePreview() {
   const [notices, setNotices] = useState<PreviewNotice[]>([]);
   const [benchmark, setBenchmark] = useState<BenchmarkUiState>({ status: "idle" });
   const [runHistory, setRunHistory] = useState<BenchmarkResult[]>([]);
-  const [atlasLiveTick, setAtlasLiveTick] = useState(0);
   const [stressCount, setStressCount] = useState(1);
   const themeRef = useRef<"dark" | "light">(persisted.theme);
 
@@ -147,13 +147,13 @@ export function useSpinePreview() {
     );
   }, [activeModel?.id, activeModel?.atlasText, activeModel?.atlasFileName, selectedSkin, activeSkinName]);
 
+  // Draw-call estimate only when pose inputs change — not every frame (that lagged analytics).
   const atlasReport = useMemo(() => {
     if (!atlasCore || !activeModel) {
       return atlasCore;
     }
-    void atlasLiveTick;
     return attachAtlasRenderPasses(atlasCore, activeModel.spine.skeleton);
-  }, [atlasCore, activeModel, atlasLiveTick]);
+  }, [atlasCore, activeModel, selectedSkin, activeSkinName, activeAnimation]);
 
   const liveDrawCalls = atlasReport?.renderPasses?.estimatedDrawCalls ?? null;
 
@@ -193,23 +193,16 @@ export function useSpinePreview() {
       animationRef.current = animationController;
       metricsRef.current = new PerformanceMonitor(pixi.app);
 
-      let atlasTicker = 0;
       pixi.app.ticker.add(() => {
         const monitor = metricsRef.current;
         if (!monitor) {
           return;
         }
         const sample = monitor.getLastSample();
-        const current = monitor.getSnapshot();
         const now = performance.now();
         if (now - metricsEmitRef.current > METRICS_EMIT_INTERVAL_MS) {
           metricsEmitRef.current = now;
-          setMetrics(current);
-        }
-
-        atlasTicker++;
-        if (atlasTicker % 36 === 0) {
-          setAtlasLiveTick((n) => n + 1);
+          setMetrics(monitor.getSnapshot());
         }
 
         const tickResult = benchmarkRunnerRef.current.tick(sample);

@@ -30,9 +30,9 @@ export interface PerformanceSnapshot {
   fps: number;
   /** Instantaneous frame time (ms). */
   frameTimeMs: number;
-  /** Rolling average FPS (from mean frame time). */
+  /** Rolling median of Pixi `ticker.FPS` (same source as the HUD). */
   avgFps: number;
-  /** Rolling average frame time (ms). */
+  /** Rolling median frame time from `elapsedMS` (ms). */
   avgFrameTimeMs: number;
   /** Rolling p95 frame time (ms). */
   p95FrameTimeMs: number;
