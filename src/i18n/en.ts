@@ -26,12 +26,12 @@ export const enMessages = {
   "scene.fps": "FPS",
   "scene.frame_ms": "Frame",
   "scene.drop_title": "Drop Spine files here:",
-  "scene.drop_hint_sub": ".json/.skel + .atlas + textures",
+  "scene.drop_hint_sub": ".json/.skel + .atlas(.txt) + textures",
 
   "notice.renderer_not_ready": "Renderer is not ready yet. Try again in a second.",
   "notice.no_files": "No files selected.",
   "notice.no_valid_bundle":
-    "No valid Spine bundle found. Need .json/.skel + .atlas + textures.",
+    "No valid Spine bundle found. Need .json/.skel + .atlas (or .atlas.txt) + textures.",
   "notice.bundles_loading": "Found {{count}} bundle(s). Loading…",
   "notice.loaded_ok": "Loaded “{{name}}” successfully.",
   "notice.load_failed": "Failed to load “{{name}}”: {{details}}",

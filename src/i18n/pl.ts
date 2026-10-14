@@ -28,12 +28,12 @@ export const plMessages: Record<MessageKey, string> = {
   "scene.fps": "FPS",
   "scene.frame_ms": "Klatka",
   "scene.drop_title": "Upuść pliki Spine tutaj:",
-  "scene.drop_hint_sub": ".json/.skel + .atlas + tekstury",
+  "scene.drop_hint_sub": ".json/.skel + .atlas(.txt) + tekstury",
 
   "notice.renderer_not_ready": "Renderer nie jest jeszcze gotowy. Spróbuj ponownie za chwilę.",
   "notice.no_files": "Nie wybrano plików.",
   "notice.no_valid_bundle":
-    "Nie znaleziono poprawnego pakietu Spine. Wymagane: .json/.skel + .atlas + tekstury.",
+    "Nie znaleziono poprawnego pakietu Spine. Wymagane: .json/.skel + .atlas (lub .atlas.txt) + tekstury.",
   "notice.bundles_loading": "Znaleziono {{count}} pakiet(ów). Wczytywanie…",
   "notice.loaded_ok": "Wczytano „{{name}}” pomyślnie.",
   "notice.load_failed": "Nie udało się wczytać „{{name}}”: {{details}}",
