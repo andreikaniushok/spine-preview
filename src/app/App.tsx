@@ -1,10 +1,8 @@
 import "./App.css";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AppHeader } from "./components/AppHeader";
-import { ControlPanel } from "./components/ControlPanel";
-import { PerformanceReportPanel } from "./components/PerformanceReportPanel";
-import { useI18n } from "./i18n/useI18n";
-import { useSpinePreview } from "./hooks/useSpinePreview";
+import { useI18n } from "../i18n/useI18n";
+import { useSpinePreview } from "../hooks";
+import { AppHeader, ControlPanel, PerformanceReportPanel } from "../ui";
 
 function App() {
   const { t } = useI18n();

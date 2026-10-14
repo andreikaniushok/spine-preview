@@ -1,8 +1,12 @@
-import type { SpineAssetBundle } from "../../types/spine";
+import type { SpineAssetBundle } from "../types";
 
 const SKELETON_EXTENSIONS = [".json", ".skel"];
 
-export class DragDropHandler {
+/**
+ * Groups local FileList entries (file picker or drag-and-drop) into Spine asset bundles.
+ * No React / Pixi — only file matching by extension and basename.
+ */
+export class SpineBundleParser {
   public static parseBundles(files: FileList): SpineAssetBundle[] {
     const entries = Array.from(files);
     const skeletonFiles = entries.filter((file) =>
@@ -25,12 +29,12 @@ export class DragDropHandler {
     const bundles: SpineAssetBundle[] = [];
     const atlasByBase = new Map<string, File>();
     for (const atlas of atlasFiles) {
-      atlasByBase.set(DragDropHandler.baseName(atlas.name), atlas);
+      atlasByBase.set(SpineBundleParser.baseName(atlas.name), atlas);
     }
 
     const fallbackAtlas = atlasFiles[0];
     for (const skeletonFile of skeletonFiles) {
-      const groupName = DragDropHandler.baseName(skeletonFile.name);
+      const groupName = SpineBundleParser.baseName(skeletonFile.name);
       const atlasFile = atlasByBase.get(groupName) ?? fallbackAtlas;
 
       bundles.push({

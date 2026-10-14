@@ -2,11 +2,8 @@ import { useMemo, useState } from "react";
 import type { MessageKey } from "../i18n/messages";
 import type { MessageVars } from "../i18n/types";
 import { useI18n } from "../i18n/useI18n";
-import type { BenchmarkResult, BenchmarkUiState } from "../types/spine";
-import { Button } from "./ui/Button";
-import { FieldRow } from "./ui/FieldRow";
-import { ProgressBar } from "./ui/ProgressBar";
-import { StatGrid, type StatItem } from "./ui/StatGrid";
+import type { BenchmarkResult, BenchmarkUiState } from "../types";
+import { Button, FieldRow, ProgressBar, StatGrid, type StatItem } from "./components";
 
 const DURATION_PRESETS_SEC = [3, 5, 10, 30] as const;
 const DURATION_SELECT_ID = "benchmark-duration";
