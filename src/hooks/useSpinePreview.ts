@@ -107,6 +107,10 @@ export function useSpinePreview() {
     scene.centerInView(pixi.app.renderer.width, pixi.app.renderer.height);
   }, []);
 
+  const recenterView = useCallback(() => {
+    centerModelInCanvas(activeModel);
+  }, [activeModel, centerModelInCanvas]);
+
   const pushNotice = useCallback((level: NoticeLevel, messageKey: MessageKey, vars?: MessageVars) => {
     const id = crypto.randomUUID();
     setNotices((old) => [...old, { id, level, messageKey, vars }]);
@@ -470,6 +474,7 @@ export function useSpinePreview() {
         stopBenchmark,
         clearBenchmark,
         clearRunHistory,
+        recenterView,
       },
     }),
     [
@@ -508,6 +513,7 @@ export function useSpinePreview() {
       stopBenchmark,
       clearBenchmark,
       clearRunHistory,
+      recenterView,
     ],
   );
 

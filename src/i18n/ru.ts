@@ -38,6 +38,8 @@ export const ruMessages: Record<MessageKey, string> = {
   "scene.frame_ms": "Кадр",
   "scene.drop_title": "Перетащите файлы Spine сюда:",
   "scene.drop_hint_sub": ".json/.skel + .atlas(.txt) + текстуры",
+  "scene.recenter": "В центр",
+  "scene.recenter_aria": "Вернуть Spine в центр и сбросить зум",
 
   "notice.renderer_not_ready": "Рендерер ещё не готов. Повторите через секунду.",
   "notice.no_files": "Файлы не выбраны.",

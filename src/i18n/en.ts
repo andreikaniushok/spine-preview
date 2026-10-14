@@ -36,6 +36,8 @@ export const enMessages = {
   "scene.frame_ms": "Frame",
   "scene.drop_title": "Drop Spine files here:",
   "scene.drop_hint_sub": ".json/.skel + .atlas(.txt) + textures",
+  "scene.recenter": "Recenter",
+  "scene.recenter_aria": "Reset Spine position and zoom to center",
 
   "notice.renderer_not_ready": "Renderer is not ready yet. Try again in a second.",
   "notice.no_files": "No files selected.",

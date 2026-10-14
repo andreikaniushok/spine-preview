@@ -1,5 +1,6 @@
 import "./App.css";
-import { Alert, Box, Button, Paper, Snackbar, Stack, Typography } from "@mui/material";
+import CenterFocusStrongIcon from "@mui/icons-material/CenterFocusStrong";
+import { Alert, Box, Button, IconButton, Paper, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { useSpinePreview } from "../hooks";
@@ -183,6 +184,36 @@ function App() {
             </Stack>
 
             <Box ref={preview.hostRef} className="pixi-host" />
+
+            <Tooltip title={t("scene.recenter")} placement="left" enterDelay={400}>
+              <Box
+                component="span"
+                sx={{
+                  position: "absolute",
+                  zIndex: 2,
+                  right: { xs: 8, md: 10 },
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              >
+                <IconButton
+                  color="primary"
+                  size="small"
+                  disabled={!vm.activeModel}
+                  onClick={preview.actions.recenterView}
+                  aria-label={t("scene.recenter_aria")}
+                  sx={{
+                    bgcolor: "background.paper",
+                    border: 1,
+                    borderColor: "divider",
+                    boxShadow: 1,
+                    "&:hover": { bgcolor: "background.paper" },
+                  }}
+                >
+                  <CenterFocusStrongIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Tooltip>
 
             {isMetricsVisible ? (
               <Paper
