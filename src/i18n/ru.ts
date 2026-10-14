@@ -74,6 +74,7 @@ export const ruMessages: Record<MessageKey, string> = {
   "control.regions_more": "… и ещё {{count}}",
   "control.no_atlas_data": "Нет данных атласа для этой модели.",
   "control.animations": "Анимации",
+  "control.select_animation": "Выберите анимацию",
   "control.no_animations": "Анимация не загружена",
   "control.playback": "Воспроизведение",
   "control.play": "Играть",

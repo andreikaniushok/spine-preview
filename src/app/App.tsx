@@ -40,15 +40,15 @@ function App() {
           overflow: "hidden",
           bgcolor: "background.default",
           gridTemplateColumns: {
-            xs: "1fr",
+            xs: "minmax(0, 1fr)",
             md: isAnalyticsVisible
               ? "minmax(240px, 300px) minmax(0, 1fr) minmax(280px, 520px)"
               : "minmax(240px, 300px) minmax(0, 1fr)",
           },
           gridTemplateRows: {
             xs: isAnalyticsVisible
-              ? "auto auto minmax(36dvh, 1fr) minmax(28dvh, 38dvh)"
-              : "auto auto minmax(0, 1fr)",
+              ? "auto minmax(0, 34dvh) minmax(0, 1fr) minmax(0, 32dvh)"
+              : "auto minmax(0, 38dvh) minmax(0, 1fr)",
             md: "auto 1fr",
           },
           gridTemplateAreas: {

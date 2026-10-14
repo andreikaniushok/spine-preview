@@ -74,6 +74,7 @@ export const plMessages: Record<MessageKey, string> = {
   "control.regions_more": "… i jeszcze {{count}}",
   "control.no_atlas_data": "Brak danych atlasu dla tego modelu.",
   "control.animations": "Animacje",
+  "control.select_animation": "Wybierz animację",
   "control.no_animations": "Brak wczytanej animacji",
   "control.playback": "Odtwarzanie",
   "control.play": "Odtwórz",

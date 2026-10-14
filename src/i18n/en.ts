@@ -72,6 +72,7 @@ export const enMessages = {
   "control.regions_more": "… and {{count}} more",
   "control.no_atlas_data": "No atlas data for this model.",
   "control.animations": "Animations",
+  "control.select_animation": "Select animation",
   "control.no_animations": "No animation loaded",
   "control.playback": "Playback",
   "control.play": "Play",

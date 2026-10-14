@@ -66,13 +66,19 @@ export function ControlPanel(props: ControlPanelProps) {
   } = props;
 
   const { t } = useI18n();
+  const animations = activeModel?.animations ?? [];
 
   return (
     <Paper
       component="aside"
       square
+      elevation={0}
       sx={{
         gridArea: "controls",
+        width: "100%",
+        maxWidth: "100%",
+        minWidth: 0,
+        boxSizing: "border-box",
         borderRight: { xs: 0, md: 1 },
         borderBottom: { xs: 1, md: 0 },
         borderColor: "divider",
@@ -80,17 +86,19 @@ export function ControlPanel(props: ControlPanelProps) {
         display: "flex",
         flexDirection: "column",
         gap: { xs: 1.25, md: 2 },
-        minWidth: 0,
         minHeight: 0,
-        maxHeight: { xs: "38dvh", md: "none" },
+        height: { xs: "auto", md: "100%" },
+        maxHeight: { xs: "min(42dvh, 100%)", md: "none" },
         overflowY: "auto",
+        overflowX: "hidden",
         WebkitOverflowScrolling: "touch",
+        overscrollBehavior: "contain",
       }}
     >
       <Stack spacing={1}>
         <Typography variant="subtitle2">{t("control.models")}</Typography>
-        <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
-          <FormControl>
+        <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
+          <FormControl fullWidth size="small" sx={{ minWidth: 0 }}>
             <InputLabel id="model-select-label">{t("control.select_model")}</InputLabel>
             <Select
               labelId="model-select-label"
@@ -110,6 +118,7 @@ export function ControlPanel(props: ControlPanelProps) {
           </FormControl>
           <Button
             color="error"
+            size="small"
             disabled={!activeModel}
             onClick={() => activeModel && onModelRemove(activeModel.id)}
             sx={{ flexShrink: 0 }}
@@ -119,12 +128,60 @@ export function ControlPanel(props: ControlPanelProps) {
         </Stack>
       </Stack>
 
-      <Stack spacing={1} sx={{ minHeight: 0 }}>
+      <Stack spacing={1} sx={{ flexShrink: 0 }}>
         <Typography variant="subtitle2">{t("control.animations")}</Typography>
+
+        <FormControl
+          fullWidth
+          size="small"
+          sx={{ display: { xs: "flex", md: "none" } }}
+        >
+          <Select
+            value={activeAnimation ?? ""}
+            displayEmpty
+            disabled={animations.length === 0}
+            aria-label={t("control.animations")}
+            onChange={(e) => {
+              const name = e.target.value;
+              if (name) onAnimationPlay(name);
+            }}
+            renderValue={(selected) => {
+              if (!selected) {
+                return (
+                  <Typography component="span" variant="body2" color="text.secondary">
+                    {animations.length === 0
+                      ? t("control.no_animations")
+                      : t("control.select_animation")}
+                  </Typography>
+                );
+              }
+              return selected;
+            }}
+            MenuProps={{
+              PaperProps: {
+                sx: { maxHeight: "50dvh" },
+              },
+            }}
+          >
+            {animations.length === 0 ? (
+              <MenuItem value="" disabled>
+                <em>{t("control.no_animations")}</em>
+              </MenuItem>
+            ) : (
+              animations.map((name) => (
+                <MenuItem key={name} value={name} sx={{ whiteSpace: "normal" }}>
+                  {name}
+                </MenuItem>
+              ))
+            )}
+          </Select>
+        </FormControl>
+
         <List
           dense
           sx={{
-            maxHeight: 180,
+            display: { xs: "none", md: "block" },
+            maxHeight: 220,
             overflow: "auto",
             border: 1,
             borderColor: "divider",
@@ -132,8 +189,8 @@ export function ControlPanel(props: ControlPanelProps) {
             py: 0,
           }}
         >
-          {activeModel?.animations.length ? (
-            activeModel.animations.map((name) => (
+          {animations.length > 0 ? (
+            animations.map((name) => (
               <ListItemButton
                 key={name}
                 selected={activeAnimation === name}
@@ -141,7 +198,12 @@ export function ControlPanel(props: ControlPanelProps) {
               >
                 <ListItemText
                   primary={name}
-                  slotProps={{ primary: { variant: "body2" } }}
+                  slotProps={{
+                    primary: {
+                      variant: "body2",
+                      sx: { whiteSpace: "normal", wordBreak: "break-word" },
+                    },
+                  }}
                 />
               </ListItemButton>
             ))
@@ -158,14 +220,14 @@ export function ControlPanel(props: ControlPanelProps) {
       <Stack spacing={1.5}>
         <Typography variant="subtitle2">{t("control.playback")}</Typography>
         <Stack direction="row" spacing={1}>
-          <Button fullWidth onClick={onPauseToggle}>
+          <Button fullWidth size="small" onClick={onPauseToggle}>
             {paused ? t("control.play") : t("control.pause")}
           </Button>
-          <Button fullWidth onClick={onReset}>
+          <Button fullWidth size="small" onClick={onReset}>
             {t("control.reset")}
           </Button>
         </Stack>
-        <FormControl>
+        <FormControl fullWidth size="small">
           <InputLabel id="mode-label">{t("control.mode")}</InputLabel>
           <Select
             labelId="mode-label"
@@ -177,7 +239,7 @@ export function ControlPanel(props: ControlPanelProps) {
             <MenuItem value="once">{t("control.once")}</MenuItem>
           </Select>
         </FormControl>
-        <FormControl>
+        <FormControl fullWidth size="small">
           <InputLabel id="speed-label">{t("control.speed")}</InputLabel>
           <Select
             labelId="speed-label"
@@ -196,7 +258,7 @@ export function ControlPanel(props: ControlPanelProps) {
 
       <Stack spacing={1.5}>
         <Typography variant="subtitle2">{t("control.appearance")}</Typography>
-        <FormControl>
+        <FormControl fullWidth size="small">
           <InputLabel id="skin-label">{t("control.skin")}</InputLabel>
           <Select
             labelId="skin-label"
@@ -222,6 +284,7 @@ export function ControlPanel(props: ControlPanelProps) {
             step={0.05}
             value={alpha}
             onChange={(_, value) => onAlphaChange(value as number)}
+            size="small"
           />
         </Box>
         <FormControlLabel
