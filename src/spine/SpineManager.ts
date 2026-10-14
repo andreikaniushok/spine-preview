@@ -4,15 +4,20 @@ import type { SpineAssetBundle, SpineModel } from "../types";
 
 export interface ISpineManager {
   readonly models: SpineModel[];
+  readonly stressInstanceCount: number;
   loadBundle(bundle: SpineAssetBundle): Promise<SpineModel>;
   setActiveModel(id: string): SpineModel | null;
   getActiveModel(): SpineModel | null;
   removeModel(id: string): SpineModel | null;
+  /** Total visible stress instances including the active model (min 1). */
+  setStressInstanceCount(total: number): number;
+  clearStressInstances(): void;
 }
 
 export class SpineManager implements ISpineManager {
   private readonly layer: Container;
   private readonly modelRegistry = new Map<string, SpineModel>();
+  private readonly stressCopies: Spine[] = [];
   private activeModelId: string | null = null;
 
   public constructor(layer: Container) {
@@ -23,7 +28,16 @@ export class SpineManager implements ISpineManager {
     return [...this.modelRegistry.values()];
   }
 
+  public get stressInstanceCount(): number {
+    const active = this.getActiveModel();
+    if (!active) {
+      return 0;
+    }
+    return 1 + this.stressCopies.length;
+  }
+
   public async loadBundle(bundle: SpineAssetBundle): Promise<SpineModel> {
+    const loadStarted = performance.now();
     const baseKey = `bundle-${bundle.id}`;
     const atlasAlias = `${baseKey}-atlas`;
     const skeletonAlias = `${baseKey}-skeleton`;
@@ -85,6 +99,9 @@ export class SpineManager implements ISpineManager {
       atlasText,
       atlasFileName: bundle.atlasFile.name,
       skeletonFileName: bundle.skeletonFile.name,
+      skeletonAlias,
+      atlasAlias,
+      loadTimeMs: performance.now() - loadStarted,
     };
 
     this.layer.addChild(spine);
@@ -97,7 +114,62 @@ export class SpineManager implements ISpineManager {
     return model;
   }
 
+  /**
+   * Spawns extra clones of the active model so that `total` spines are updating.
+   * Returns the actual instance count after clamping.
+   */
+  public setStressInstanceCount(total: number): number {
+    const active = this.getActiveModel();
+    if (!active) {
+      this.clearStressInstances();
+      return 0;
+    }
+
+    const targetExtra = Math.max(0, Math.floor(total) - 1);
+    while (this.stressCopies.length > targetExtra) {
+      const spine = this.stressCopies.pop();
+      if (spine) {
+        this.layer.removeChild(spine);
+        spine.destroy();
+      }
+    }
+
+    while (this.stressCopies.length < targetExtra) {
+      const clone = Spine.from({
+        skeleton: active.skeletonAlias,
+        atlas: active.atlasAlias,
+        autoUpdate: true,
+      });
+      clone.visible = true;
+      // Offset slightly so clones are not perfectly stacked.
+      const i = this.stressCopies.length + 1;
+      clone.x = (i % 5) * 24;
+      clone.y = Math.floor(i / 5) * 24;
+      if (active.spine.state.tracks[0]?.animation) {
+        const anim = active.spine.state.tracks[0].animation;
+        clone.state.setAnimation(0, anim.name, true);
+      }
+      this.layer.addChild(clone);
+      this.stressCopies.push(clone);
+    }
+
+    return this.stressInstanceCount;
+  }
+
+  public clearStressInstances(): void {
+    while (this.stressCopies.length > 0) {
+      const spine = this.stressCopies.pop();
+      if (spine) {
+        this.layer.removeChild(spine);
+        spine.destroy();
+      }
+    }
+  }
+
   public setActiveModel(id: string): SpineModel | null {
+    if (this.activeModelId !== id) {
+      this.clearStressInstances();
+    }
     const model = this.modelRegistry.get(id) ?? null;
     this.activeModelId = model?.id ?? null;
 
@@ -119,6 +191,10 @@ export class SpineManager implements ISpineManager {
     const model = this.modelRegistry.get(id) ?? null;
     if (!model) {
       return null;
+    }
+
+    if (this.activeModelId === id) {
+      this.clearStressInstances();
     }
 
     this.layer.removeChild(model.spine);

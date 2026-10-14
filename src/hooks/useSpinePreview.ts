@@ -4,10 +4,10 @@ import { Container } from "pixi.js";
 import {
   attachAtlasRenderPasses,
   buildAtlasAnalysis,
-  buildSpinePerformanceReport,
-  type PerformanceBaseline,
+  buildSkeletonStructureStats,
 } from "../analytics";
 import type {
+  BenchmarkResult,
   BenchmarkUiState,
   PerformanceSnapshot,
   PlaybackMode,
@@ -41,7 +41,8 @@ const rendererBackgroundByTheme = {
   dark: "#0d111a",
   light: "#f5f7fb",
 } as const;
-const METRICS_EMIT_INTERVAL_MS = 120;
+/** Slower emits = fewer React re-renders while analytics tables are mounted. */
+const METRICS_EMIT_INTERVAL_MS = 250;
 
 function getPersistedState(): PersistedState {
   const fallback: PersistedState = { speed: 1, mode: "loop", theme: "dark" };
@@ -80,11 +81,17 @@ export function useSpinePreview() {
   const [metrics, setMetrics] = useState<PerformanceSnapshot>({
     fps: 0,
     frameTimeMs: 0,
+    avgFps: 0,
+    avgFrameTimeMs: 0,
+    p95FrameTimeMs: 0,
+    animationUpdateMs: 0,
+    renderMs: 0,
+    memoryBytes: null,
   });
   const [notices, setNotices] = useState<PreviewNotice[]>([]);
   const [benchmark, setBenchmark] = useState<BenchmarkUiState>({ status: "idle" });
-  const [performanceBaseline, setPerformanceBaseline] = useState<PerformanceBaseline | null>(null);
-  const [atlasLiveTick, setAtlasLiveTick] = useState(0);
+  const [runHistory, setRunHistory] = useState<BenchmarkResult[]>([]);
+  const [stressCount, setStressCount] = useState(1);
   const themeRef = useRef<"dark" | "light">(persisted.theme);
 
   const centerModelInCanvas = useCallback((model: SpineModel | null) => {
@@ -99,6 +106,10 @@ export function useSpinePreview() {
     scene.center(model.spine);
     scene.centerInView(pixi.app.renderer.width, pixi.app.renderer.height);
   }, []);
+
+  const recenterView = useCallback(() => {
+    centerModelInCanvas(activeModel);
+  }, [activeModel, centerModelInCanvas]);
 
   const pushNotice = useCallback((level: NoticeLevel, messageKey: MessageKey, vars?: MessageVars) => {
     const id = crypto.randomUUID();
@@ -118,11 +129,11 @@ export function useSpinePreview() {
 
   const activeSkinName = activeModel?.spine.skeleton.skin?.name ?? "";
 
-  const performanceReport = useMemo(() => {
+  const skeletonStructure = useMemo(() => {
     if (!activeModel) {
       return null;
     }
-    return buildSpinePerformanceReport(activeModel.spine.skeleton);
+    return buildSkeletonStructureStats(activeModel.spine.skeleton);
   }, [activeModel, selectedSkin, activeSkinName]);
 
   const atlasCore = useMemo(() => {
@@ -136,13 +147,15 @@ export function useSpinePreview() {
     );
   }, [activeModel?.id, activeModel?.atlasText, activeModel?.atlasFileName, selectedSkin, activeSkinName]);
 
+  // Draw-call estimate only when pose inputs change — not every frame (that lagged analytics).
   const atlasReport = useMemo(() => {
     if (!atlasCore || !activeModel) {
       return atlasCore;
     }
-    void atlasLiveTick;
     return attachAtlasRenderPasses(atlasCore, activeModel.spine.skeleton);
-  }, [atlasCore, activeModel, atlasLiveTick]);
+  }, [atlasCore, activeModel, selectedSkin, activeSkinName, activeAnimation]);
+
+  const liveDrawCalls = atlasReport?.renderPasses?.estimatedDrawCalls ?? null;
 
   useEffect(() => {
     animationRef.current?.setSpeed(speed);
@@ -180,29 +193,30 @@ export function useSpinePreview() {
       animationRef.current = animationController;
       metricsRef.current = new PerformanceMonitor(pixi.app);
 
-      let atlasTicker = 0;
       pixi.app.ticker.add(() => {
-        const current = metricsRef.current?.getSnapshot();
-        if (current) {
-          const now = performance.now();
-          if (now - metricsEmitRef.current > METRICS_EMIT_INTERVAL_MS) {
-            metricsEmitRef.current = now;
-            setMetrics(current);
-          }
+        const monitor = metricsRef.current;
+        if (!monitor) {
+          return;
+        }
+        const sample = monitor.getLastSample();
+        const now = performance.now();
+        if (now - metricsEmitRef.current > METRICS_EMIT_INTERVAL_MS) {
+          metricsEmitRef.current = now;
+          setMetrics(monitor.getSnapshot());
         }
 
-        atlasTicker++;
-        if (atlasTicker % 36 === 0) {
-          setAtlasLiveTick((n) => n + 1);
-        }
-
-        if (current) {
-          const tickResult = benchmarkRunnerRef.current.tick(current.frameTimeMs);
-          if (tickResult.kind === "running" && tickResult.shouldEmitProgress) {
-            setBenchmark({ status: "running", progress: tickResult.progress });
-          } else if (tickResult.kind === "finished") {
-            setBenchmark({ status: "done", result: tickResult.result });
-          }
+        const tickResult = benchmarkRunnerRef.current.tick(sample);
+        if (tickResult.kind === "running" && tickResult.shouldEmitProgress) {
+          setBenchmark((prev) => ({
+            status: "running",
+            progress: tickResult.progress,
+            skeletonCount: prev.status === "running" ? prev.skeletonCount : 1,
+          }));
+        } else if (tickResult.kind === "finished") {
+          setBenchmark({ status: "done", result: tickResult.result });
+          setRunHistory((prev) => [...prev, tickResult.result]);
+          spineManagerRef.current?.clearStressInstances();
+          setStressCount(1);
         }
       });
     });
@@ -347,18 +361,39 @@ export function useSpinePreview() {
   }, []);
 
   const startBenchmark = useCallback(
-    (durationSec: number) => {
-      if (!pixiRef.current || !metricsRef.current) {
+    (durationSec: number, skeletonCount: number) => {
+      const manager = spineManagerRef.current;
+      if (!pixiRef.current || !metricsRef.current || !manager) {
         pushNotice("error", "notice.renderer_not_ready");
         return;
       }
-      if (!benchmarkRunnerRef.current.start(durationSec)) {
+      if (!manager.getActiveModel()) {
+        pushNotice("error", "notice.benchmark_need_model");
         return;
       }
-      setBenchmark({ status: "running", progress: 0 });
-      pushNotice("info", "notice.benchmark_started", { seconds: durationSec });
+
+      const actualCount = manager.setStressInstanceCount(skeletonCount);
+      setStressCount(actualCount);
+
+      if (
+        !benchmarkRunnerRef.current.start({
+          durationSec,
+          skeletonCount: actualCount,
+          drawCallsPerSkeleton: liveDrawCalls,
+        })
+      ) {
+        manager.clearStressInstances();
+        setStressCount(1);
+        return;
+      }
+
+      setBenchmark({ status: "running", progress: 0, skeletonCount: actualCount });
+      pushNotice("info", "notice.benchmark_started", {
+        seconds: durationSec,
+        count: actualCount,
+      });
     },
-    [pushNotice],
+    [liveDrawCalls, pushNotice],
   );
 
   const stopBenchmark = useCallback(() => {
@@ -367,24 +402,13 @@ export function useSpinePreview() {
 
   const clearBenchmark = useCallback(() => {
     benchmarkRunnerRef.current.reset();
+    spineManagerRef.current?.clearStressInstances();
+    setStressCount(1);
     setBenchmark({ status: "idle" });
   }, []);
 
-  const capturePerformanceBaseline = useCallback(() => {
-    if (!activeModel || !performanceReport) {
-      pushNotice("error", "notice.no_baseline_skeleton");
-      return;
-    }
-    setPerformanceBaseline({
-      label: "A",
-      modelName: activeModel.name,
-      report: performanceReport,
-    });
-    pushNotice("info", "notice.baseline_captured", { name: activeModel.name });
-  }, [activeModel, performanceReport, pushNotice]);
-
-  const clearPerformanceBaseline = useCallback(() => {
-    setPerformanceBaseline(null);
+  const clearRunHistory = useCallback(() => {
+    setRunHistory([]);
   }, []);
 
   useEffect(() => {
@@ -419,8 +443,10 @@ export function useSpinePreview() {
         metrics,
         notices,
         benchmark,
-        performanceReport,
-        performanceBaseline,
+        runHistory,
+        skeletonStructure,
+        skeletonInstanceCount: stressCount,
+        drawCalls: liveDrawCalls,
         atlasReport,
       },
       actions: {
@@ -440,8 +466,8 @@ export function useSpinePreview() {
         startBenchmark,
         stopBenchmark,
         clearBenchmark,
-        capturePerformanceBaseline,
-        clearPerformanceBaseline,
+        clearRunHistory,
+        recenterView,
       },
     }),
     [
@@ -458,8 +484,10 @@ export function useSpinePreview() {
       metrics,
       notices,
       benchmark,
-      performanceReport,
-      performanceBaseline,
+      runHistory,
+      skeletonStructure,
+      stressCount,
+      liveDrawCalls,
       atlasReport,
       loadFiles,
       selectModel,
@@ -477,8 +505,8 @@ export function useSpinePreview() {
       startBenchmark,
       stopBenchmark,
       clearBenchmark,
-      capturePerformanceBaseline,
-      clearPerformanceBaseline,
+      clearRunHistory,
+      recenterView,
     ],
   );
 

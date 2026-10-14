@@ -1,7 +1,4 @@
-import type { SpinePerformanceReport } from "./spinePerformanceReport";
+import type { BenchmarkResult } from "../types";
 
-export interface PerformanceBaseline {
-  label: string;
-  modelName: string;
-  report: SpinePerformanceReport;
-}
+/** Kept for barrel compatibility — run comparison now uses BenchmarkResult history. */
+export type PerformanceBaseline = BenchmarkResult;

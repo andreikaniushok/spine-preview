@@ -37,6 +37,10 @@ export class PixiApp implements IAppRenderer {
   }
 
   public destroy(): void {
-    this.app.destroy(true, { children: true, texture: true });
+    try {
+      this.app.destroy(true, { children: true, texture: true });
+    } catch {
+      // Safe if destroy races with an unfinished init() under React Strict Mode.
+    }
   }
 }

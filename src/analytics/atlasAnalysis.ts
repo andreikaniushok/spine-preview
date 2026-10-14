@@ -25,6 +25,12 @@ export interface AtlasPageStats {
   wrapU: string;
   wrapV: string;
   premultipliedAlpha: boolean;
+  /**
+   * Estimated GPU/CPU texture memory for RGBA8 (width × height × 4).
+   * If the page uses mipmaps, includes the classic ≈+33% chain cost.
+   */
+  estimatedMemoryBytes: number;
+  hasMipmaps: boolean;
 }
 
 export interface AtlasRegionRow {
@@ -69,6 +75,8 @@ export interface AtlasAnalysisReport {
   totalPagePixels: number;
   totalPackedPixels: number;
   overallUtilizationPercent: number;
+  /** Sum of estimatedMemoryBytes across pages. */
+  totalEstimatedMemoryBytes: number;
   pages: AtlasPageStats[];
   topRegionsByArea: AtlasRegionRow[];
   /** All region names in atlas file order (for asset browser). */
@@ -76,6 +84,21 @@ export interface AtlasAnalysisReport {
   linkage: AtlasSkeletonLinkage | null;
   /** Present when skeleton is passed and atlas regions are bound on attachments. */
   renderPasses: AtlasRenderPasses | null;
+}
+
+const RGBA8_BYTES_PER_PIXEL = 4;
+
+function filterUsesMipmaps(filterName: string): boolean {
+  return filterName.toLowerCase().includes("mipmap");
+}
+
+/** Uncompressed RGBA8 footprint; mipmaps ≈ base × 4/3. */
+function estimateTextureMemoryBytes(width: number, height: number, mipmaps: boolean): number {
+  const base = Math.max(0, width) * Math.max(0, height) * RGBA8_BYTES_PER_PIXEL;
+  if (!mipmaps || base === 0) {
+    return base;
+  }
+  return Math.round(base * (4 / 3));
 }
 
 function textureFilterName(v: TextureFilter): string {
@@ -212,6 +235,7 @@ export function buildAtlasAnalysis(atlasText: string, atlasFileName: string, ske
       totalPagePixels: 0,
       totalPackedPixels: 0,
       overallUtilizationPercent: 0,
+      totalEstimatedMemoryBytes: 0,
       pages: [],
       topRegionsByArea: [],
       regionNames: [],
@@ -224,6 +248,7 @@ export function buildAtlasAnalysis(atlasText: string, atlasFileName: string, ske
     const pages: AtlasPageStats[] = [];
     let totalPagePixels = 0;
     let totalPackedPixels = 0;
+    let totalEstimatedMemoryBytes = 0;
 
     for (const page of atlas.pages) {
       const w = page.width;
@@ -237,6 +262,11 @@ export function buildAtlasAnalysis(atlasText: string, atlasFileName: string, ske
       const utilization = totalPixels > 0 ? (packed / totalPixels) * 100 : 0;
       totalPagePixels += totalPixels;
       totalPackedPixels += packed;
+      const filterMin = textureFilterName(page.minFilter);
+      const filterMag = textureFilterName(page.magFilter);
+      const mipmaps = filterUsesMipmaps(filterMin) || filterUsesMipmaps(filterMag);
+      const estimatedMemoryBytes = estimateTextureMemoryBytes(w, h, mipmaps);
+      totalEstimatedMemoryBytes += estimatedMemoryBytes;
 
       pages.push({
         fileName: page.name,
@@ -246,11 +276,13 @@ export function buildAtlasAnalysis(atlasText: string, atlasFileName: string, ske
         packedPixels: packed,
         utilizationPercent: Math.round(utilization * 10) / 10,
         regionCount: regionsOnPage.length,
-        filterMin: textureFilterName(page.minFilter),
-        filterMag: textureFilterName(page.magFilter),
+        filterMin,
+        filterMag,
         wrapU: textureWrapName(page.uWrap),
         wrapV: textureWrapName(page.vWrap),
         premultipliedAlpha: page.pma,
+        estimatedMemoryBytes,
+        hasMipmaps: mipmaps,
       });
     }
 
@@ -308,6 +340,7 @@ export function buildAtlasAnalysis(atlasText: string, atlasFileName: string, ske
       totalPagePixels,
       totalPackedPixels,
       overallUtilizationPercent: overallUtilization,
+      totalEstimatedMemoryBytes,
       pages,
       topRegionsByArea,
       regionNames,

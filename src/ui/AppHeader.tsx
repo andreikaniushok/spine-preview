@@ -66,10 +66,12 @@ export function AppHeader({
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: { xs: 0.5, sm: 1.5 },
-            flexWrap: "wrap",
+            gap: { xs: 0.25, sm: 1.5 },
+            flexWrap: "nowrap",
             justifyContent: "flex-end",
-            flex: { xs: "1 1 100%", sm: "0 1 auto" },
+            flex: { xs: "1 1 auto", sm: "0 1 auto" },
+            minWidth: 0,
+            overflowX: "auto",
           }}
         >
           <FormControlLabel

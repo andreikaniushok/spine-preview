@@ -1,5 +1,6 @@
 import "./App.css";
-import { Alert, Box, Button, Paper, Snackbar, Stack, Typography } from "@mui/material";
+import CenterFocusStrongIcon from "@mui/icons-material/CenterFocusStrong";
+import { Alert, Box, Button, IconButton, Paper, Snackbar, Stack, Tooltip, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { useSpinePreview } from "../hooks";
@@ -39,22 +40,23 @@ function App() {
           overflow: "hidden",
           bgcolor: "background.default",
           gridTemplateColumns: {
-            xs: "1fr",
+            // Phones: single column. sm+ desktop/tablet: side panels in the grid (no overlay).
+            xs: "minmax(0, 1fr)",
+            sm: isAnalyticsVisible
+              ? "minmax(200px, 260px) minmax(0, 1fr) minmax(240px, 420px)"
+              : "minmax(200px, 280px) minmax(0, 1fr)",
             md: isAnalyticsVisible
               ? "minmax(240px, 300px) minmax(0, 1fr) minmax(280px, 520px)"
               : "minmax(240px, 300px) minmax(0, 1fr)",
           },
           gridTemplateRows: {
-            xs: isAnalyticsVisible
-              ? "auto auto minmax(36dvh, 1fr) minmax(28dvh, 38dvh)"
-              : "auto auto minmax(0, 1fr)",
-            md: "auto 1fr",
+            xs: "auto minmax(0, 34dvh) minmax(0, 1fr)",
+            sm: "auto 1fr",
           },
           gridTemplateAreas: {
-            xs: isAnalyticsVisible
-              ? `"header" "controls" "scene" "analytics"`
-              : `"header" "controls" "scene"`,
-            md: isAnalyticsVisible
+            // Phone analytics is a fixed sheet (not in the grid). sm+ uses a real column.
+            xs: `"header" "controls" "scene"`,
+            sm: isAnalyticsVisible
               ? `"header header header" "controls scene analytics"`
               : `"header header" "controls scene"`,
           },
@@ -184,6 +186,36 @@ function App() {
 
             <Box ref={preview.hostRef} className="pixi-host" />
 
+            <Tooltip title={t("scene.recenter")} placement="left" enterDelay={400}>
+              <Box
+                component="span"
+                sx={{
+                  position: "absolute",
+                  zIndex: 2,
+                  right: { xs: 8, md: 10 },
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              >
+                <IconButton
+                  color="primary"
+                  size="small"
+                  disabled={!vm.activeModel}
+                  onClick={preview.actions.recenterView}
+                  aria-label={t("scene.recenter_aria")}
+                  sx={{
+                    bgcolor: "background.paper",
+                    border: 1,
+                    borderColor: "divider",
+                    boxShadow: 1,
+                    "&:hover": { bgcolor: "background.paper" },
+                  }}
+                >
+                  <CenterFocusStrongIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Tooltip>
+
             {isMetricsVisible ? (
               <Paper
                 sx={{
@@ -254,16 +286,12 @@ function App() {
 
         {isAnalyticsVisible ? (
           <PerformanceReportPanel
-            report={vm.performanceReport}
+            metrics={vm.metrics}
+            structure={vm.skeletonStructure}
             atlasReport={vm.atlasReport}
             activeModel={vm.activeModel}
-            benchmark={vm.benchmark}
-            onBenchmarkStart={preview.actions.startBenchmark}
-            onBenchmarkStop={preview.actions.stopBenchmark}
-            onBenchmarkClear={preview.actions.clearBenchmark}
-            baseline={vm.performanceBaseline}
-            onCaptureBaseline={preview.actions.capturePerformanceBaseline}
-            onClearBaseline={preview.actions.clearPerformanceBaseline}
+            modelCount={vm.models.length}
+            drawCalls={vm.drawCalls}
           />
         ) : null}
 
