@@ -1,4 +1,4 @@
-/** Pure analytics: atlas / skeleton cost / benchmark stats — no React / Pixi Application. */
+/** Pure analytics: atlas / skeleton structure / benchmark stats — no React / Pixi Application. */
 export {
   buildAtlasAnalysis,
   attachAtlasRenderPasses,
@@ -10,6 +10,11 @@ export {
   type AtlasSkeletonLinkage,
 } from "./atlasAnalysis";
 export {
+  buildSkeletonStructureStats,
+  type SkeletonStructureStats,
+  type BoneAnchorRow,
+} from "./skeletonStructure";
+export {
   buildSpinePerformanceReport,
   impactFromVertices,
   impactFromConstraints,
@@ -17,5 +22,5 @@ export {
   type SpinePerformanceReport,
   type ImpactLevel,
 } from "./spinePerformanceReport";
-export { summarizeBenchmark } from "./benchmarkStats";
+export { summarizeBenchmark, type BenchmarkSampleInput } from "./benchmarkStats";
 export type { PerformanceBaseline } from "./performanceBaseline";

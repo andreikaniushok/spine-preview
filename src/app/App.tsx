@@ -254,16 +254,12 @@ function App() {
 
         {isAnalyticsVisible ? (
           <PerformanceReportPanel
-            report={vm.performanceReport}
+            metrics={vm.metrics}
+            structure={vm.skeletonStructure}
             atlasReport={vm.atlasReport}
             activeModel={vm.activeModel}
-            benchmark={vm.benchmark}
-            onBenchmarkStart={preview.actions.startBenchmark}
-            onBenchmarkStop={preview.actions.stopBenchmark}
-            onBenchmarkClear={preview.actions.clearBenchmark}
-            baseline={vm.performanceBaseline}
-            onCaptureBaseline={preview.actions.capturePerformanceBaseline}
-            onClearBaseline={preview.actions.clearPerformanceBaseline}
+            modelCount={vm.models.length}
+            drawCalls={vm.drawCalls}
           />
         ) : null}
 
