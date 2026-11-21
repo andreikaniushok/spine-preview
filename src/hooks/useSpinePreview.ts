@@ -38,8 +38,8 @@ export interface PreviewNotice {
 }
 
 const rendererBackgroundByTheme = {
-  dark: "#0d111a",
-  light: "#f5f7fb",
+  dark: "#121A22",
+  light: "#E7F2F8",
 } as const;
 /** Slower emits = fewer React re-renders while analytics tables are mounted. */
 const METRICS_EMIT_INTERVAL_MS = 250;

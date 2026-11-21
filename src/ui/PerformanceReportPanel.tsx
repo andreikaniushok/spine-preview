@@ -210,7 +210,7 @@ function PerformanceReportPanelInner(props: PerformanceReportPanelProps) {
               borderColor: "divider",
               borderTopLeftRadius: 12,
               borderTopRightRadius: 12,
-              boxShadow: "0 -4px 24px rgba(0,0,0,0.25)",
+              boxShadow: theme.shadows[8],
               bgcolor: "background.paper",
               pb: "env(safe-area-inset-bottom, 0px)",
             }
