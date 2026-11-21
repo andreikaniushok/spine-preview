@@ -72,6 +72,8 @@ export function ControlPanel(props: ControlPanelProps) {
 
   const { t } = useI18n();
   const animations = activeModel?.animations ?? [];
+  const hasModel = activeModel !== null;
+  const skins = activeModel?.skins ?? [];
 
   return (
     <Paper
@@ -103,12 +105,13 @@ export function ControlPanel(props: ControlPanelProps) {
       <Stack spacing={1}>
         <Typography variant="subtitle2">{t("control.models")}</Typography>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
-          <FormControl fullWidth size="small" sx={{ minWidth: 0 }}>
+          <FormControl fullWidth size="small" disabled={models.length === 0} sx={{ minWidth: 0 }}>
             <InputLabel id="model-select-label">{t("control.select_model")}</InputLabel>
             <Select
               labelId="model-select-label"
               label={t("control.select_model")}
               value={activeModel?.id ?? ""}
+              disabled={models.length === 0}
               onChange={(e) => onModelSelect(e.target.value)}
             >
               <MenuItem value="">
@@ -228,6 +231,7 @@ export function ControlPanel(props: ControlPanelProps) {
           <Button
             fullWidth
             variant="contained"
+            disabled={!hasModel}
             startIcon={paused ? <PlayArrowIcon aria-hidden /> : <PauseIcon aria-hidden />}
             onClick={onPauseToggle}
             sx={{ minHeight: 44 }}
@@ -236,6 +240,7 @@ export function ControlPanel(props: ControlPanelProps) {
           </Button>
           <Button
             fullWidth
+            disabled={!hasModel}
             startIcon={<RestartAltIcon aria-hidden />}
             onClick={onReset}
             sx={{ minHeight: 44 }}
@@ -250,6 +255,7 @@ export function ControlPanel(props: ControlPanelProps) {
           <ToggleButtonGroup
             exclusive
             fullWidth
+            disabled={!hasModel}
             value={mode}
             aria-labelledby="mode-label"
             onChange={(_, value: PlaybackMode | null) => {
@@ -271,6 +277,7 @@ export function ControlPanel(props: ControlPanelProps) {
           <ToggleButtonGroup
             exclusive
             fullWidth
+            disabled={!hasModel}
             value={String(speed)}
             aria-labelledby="speed-label"
             onChange={(_, value: string | null) => {
@@ -288,19 +295,24 @@ export function ControlPanel(props: ControlPanelProps) {
 
       <Stack spacing={1.5}>
         <Typography variant="subtitle2">{t("control.appearance")}</Typography>
-        <FormControl fullWidth size="small">
+        <FormControl fullWidth size="small" disabled={!hasModel || skins.length === 0}>
           <InputLabel id="skin-label">{t("control.skin")}</InputLabel>
           <Select
             labelId="skin-label"
             label={t("control.skin")}
-            value={selectedSkin}
+            value={skins.includes(selectedSkin) ? selectedSkin : ""}
+            disabled={!hasModel || skins.length === 0}
             onChange={(e) => onSkinChange(e.target.value)}
           >
-            {activeModel?.skins.map((skinName) => (
-              <MenuItem key={skinName} value={skinName}>
-                {skinName}
-              </MenuItem>
-            )) ?? <MenuItem value="">{t("control.default_skin")}</MenuItem>}
+            {skins.length > 0 ? (
+              skins.map((skinName) => (
+                <MenuItem key={skinName} value={skinName}>
+                  {skinName}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem value="">{t("control.default_skin")}</MenuItem>
+            )}
           </Select>
         </FormControl>
         <Box>
@@ -313,11 +325,13 @@ export function ControlPanel(props: ControlPanelProps) {
             max={1}
             step={0.05}
             value={alpha}
+            disabled={!hasModel}
             onChange={(_, value) => onAlphaChange(value as number)}
             size="small"
           />
         </Box>
         <FormControlLabel
+          disabled={!hasModel}
           control={
             <Checkbox
               checked={debugBones}

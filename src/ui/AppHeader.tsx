@@ -104,7 +104,27 @@ function ViewToggle({
       selected={pressed}
       aria-label={ariaLabel}
       onChange={() => onChange(!pressed)}
-      sx={{ gap: 0.75, px: 1.5 }}
+      sx={(muiTheme) => {
+        const dark = muiTheme.palette.mode === "dark";
+        const labelColor = "primary.main";
+        const borderColor = dark ? "#8AA0B2" : "#6A8094";
+        return {
+          gap: 0.75,
+          px: 1.5,
+          color: labelColor,
+          borderColor,
+          "&:hover": {
+            color: labelColor,
+            borderColor,
+            backgroundColor: dark ? "rgba(213, 222, 232, 0.08)" : "rgba(62, 83, 104, 0.06)",
+          },
+          "&&.Mui-selected, &&.Mui-selected:hover": {
+            color: labelColor,
+            borderColor: labelColor,
+            backgroundColor: dark ? "rgba(213, 222, 232, 0.18)" : "rgba(62, 83, 104, 0.12)",
+          },
+        };
+      }}
     >
       {icon}
       {label}

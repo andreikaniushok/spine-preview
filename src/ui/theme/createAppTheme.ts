@@ -10,10 +10,11 @@ export const sceneBackgroundByTheme: Record<AppColorMode, string> = {
 
 export function createAppTheme(mode: AppColorMode): Theme {
   const dark = mode === "dark";
-  const accent = dark ? "#B7E4F7" : "#1A4F73";
-  const onAccent = dark ? "#0B2540" : "#FFFFFF";
-  const pastel = "#87CEEB";
-  const onPastel = "#0B2540";
+  const accent = dark ? "#D5DEE8" : "#3E5368";
+  const onAccent = dark ? "#122033" : "#FFFFFF";
+  const pastel = dark ? "#B4C5D4" : "#9AABBA";
+  const pastelHover = dark ? "#A3B6C7" : "#889AAB";
+  const onPastel = "#122033";
 
   const theme = createTheme({
     palette: {
@@ -31,8 +32,8 @@ export function createAppTheme(mode: AppColorMode): Theme {
       divider: dark ? "#314556" : "#C5D7E4",
       error: { main: dark ? "#FCA5A5" : "#B91C1C", contrastText: dark ? "#2A0A0A" : "#FFFFFF" },
       action: {
-        hover: dark ? "rgba(183, 228, 247, 0.08)" : "rgba(26, 79, 115, 0.06)",
-        selected: dark ? "rgba(183, 228, 247, 0.16)" : "rgba(135, 206, 235, 0.35)",
+        hover: dark ? "rgba(213, 222, 232, 0.08)" : "rgba(62, 83, 104, 0.06)",
+        selected: dark ? "rgba(213, 222, 232, 0.16)" : "rgba(154, 171, 186, 0.45)",
       },
     },
     typography: {
@@ -78,7 +79,7 @@ export function createAppTheme(mode: AppColorMode): Theme {
               ),
             },
             "&.Mui-focusVisible": {
-              outline: `3px solid ${dark ? "#D6F1FB" : "#1A4F73"}`,
+              outline: `3px solid ${dark ? "#E4EBF2" : "#3E5368"}`,
               outlineOffset: 2,
             },
           }),
@@ -89,7 +90,7 @@ export function createAppTheme(mode: AppColorMode): Theme {
         styleOverrides: {
           root: { textTransform: "none" },
           outlined: {
-            borderColor: dark ? "#5E8CA8" : "#8EB8D4",
+            borderColor: dark ? "#8AA0B2" : "#6A8094",
           },
         },
         variants: [
@@ -98,7 +99,7 @@ export function createAppTheme(mode: AppColorMode): Theme {
             style: {
               backgroundColor: pastel,
               color: onPastel,
-              "&:hover": { backgroundColor: "#6FBFDF", color: onPastel },
+              "&:hover": { backgroundColor: pastelHover, color: onPastel },
             },
           },
         ],
@@ -113,7 +114,16 @@ export function createAppTheme(mode: AppColorMode): Theme {
               backgroundColor: pastel,
               color: onPastel,
               borderColor: pastel,
-              "&:hover": { backgroundColor: "#6FBFDF", color: onPastel },
+              "&:hover": { backgroundColor: pastelHover, color: onPastel },
+            },
+            "&.Mui-disabled": {
+              color: dark ? "rgba(244, 248, 251, 0.38)" : "rgba(18, 32, 51, 0.38)",
+              borderColor: dark ? "#314556" : "#C5D7E4",
+            },
+            "&.Mui-selected.Mui-disabled": {
+              backgroundColor: dark ? "rgba(213, 222, 232, 0.14)" : "rgba(62, 83, 104, 0.14)",
+              color: dark ? "rgba(244, 248, 251, 0.38)" : "rgba(18, 32, 51, 0.38)",
+              borderColor: dark ? "#314556" : "#C5D7E4",
             },
           },
         },
@@ -124,9 +134,44 @@ export function createAppTheme(mode: AppColorMode): Theme {
           root: { backgroundImage: "none" },
         },
       },
+      MuiOutlinedInput: {
+        styleOverrides: {
+          root: {
+            "&.Mui-disabled": {
+              backgroundColor: dark ? "rgba(213, 222, 232, 0.08)" : "rgba(62, 83, 104, 0.08)",
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: dark ? "#314556" : "#C5D7E4",
+              },
+            },
+          },
+          input: {
+            "&.Mui-disabled": {
+              WebkitTextFillColor: dark ? "rgba(244, 248, 251, 0.38)" : "rgba(18, 32, 51, 0.38)",
+            },
+          },
+        },
+      },
+      MuiInputLabel: {
+        styleOverrides: {
+          root: {
+            "&.Mui-disabled": {
+              color: dark ? "rgba(244, 248, 251, 0.38)" : "rgba(18, 32, 51, 0.38)",
+            },
+          },
+        },
+      },
+      MuiSelect: {
+        defaultProps: { size: "small" },
+        styleOverrides: {
+          icon: {
+            "&.Mui-disabled": {
+              color: dark ? "rgba(244, 248, 251, 0.38)" : "rgba(18, 32, 51, 0.38)",
+            },
+          },
+        },
+      },
       MuiFormControl: { defaultProps: { size: "small", fullWidth: true } },
       MuiTextField: { defaultProps: { size: "small", fullWidth: true } },
-      MuiSelect: { defaultProps: { size: "small" } },
       MuiSwitch: { defaultProps: { size: "small" } },
       MuiSlider: { defaultProps: { size: "small" } },
       MuiChip: { defaultProps: { size: "small" } },
