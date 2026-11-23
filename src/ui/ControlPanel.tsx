@@ -293,7 +293,7 @@ export function ControlPanel(props: ControlPanelProps) {
           </Button>
         </Stack>
         <Box>
-          <Typography variant="body2" id="mode-label" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" id="mode-label" sx={{ mb: 1 }}>
             {t("control.mode")}
           </Typography>
           <ToggleButtonGroup
@@ -315,7 +315,7 @@ export function ControlPanel(props: ControlPanelProps) {
           </ToggleButtonGroup>
         </Box>
         <Box>
-          <Typography variant="body2" id="speed-label" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" id="speed-label" sx={{ mb: 1 }}>
             {t("control.speed")}
           </Typography>
           <ToggleButtonGroup
@@ -360,7 +360,7 @@ export function ControlPanel(props: ControlPanelProps) {
           </Select>
         </FormControl>
         <Box>
-          <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: "block" }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
             {t("control.alpha")}: {alpha.toFixed(2)}
           </Typography>
           <Slider
