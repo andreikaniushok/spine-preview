@@ -115,9 +115,19 @@ export function SettingsMenu({ theme, onThemeChange }: SettingsMenuProps) {
                 {t("settings.section_about")}
               </Typography>
               <Stack spacing={0.75}>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                  {t("header.brand")}
-                </Typography>
+                <Stack direction="row" spacing={1} sx={{ alignItems: "center" }}>
+                  <Box
+                    component="img"
+                    src="/logo.png"
+                    alt=""
+                    width={28}
+                    height={28}
+                    sx={{ width: 28, height: 28, display: "block", flexShrink: 0 }}
+                  />
+                  <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                    {t("header.brand")}
+                  </Typography>
+                </Stack>
                 <Typography variant="body2" color="text.secondary">
                   {t("settings.about_version", { version: APP_VERSION })}
                 </Typography>
