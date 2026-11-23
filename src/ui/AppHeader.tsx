@@ -47,21 +47,39 @@ export function AppHeader({
           alignItems: "center",
         }}
       >
-        <Typography
+        <Box
           component="h1"
-          variant="h5"
           sx={{
             m: 0,
             minWidth: 0,
-            fontSize: { xs: "1.15rem", md: "1.4rem" },
-            fontWeight: 650,
-            letterSpacing: "-0.02em",
-            color: "text.primary",
-            lineHeight: 1.2,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.25,
           }}
         >
-          {t("header.brand")}
-        </Typography>
+          <Box
+            component="img"
+            src="/logo.png"
+            alt=""
+            width={32}
+            height={32}
+            sx={{ width: 32, height: 32, display: "block", flexShrink: 0 }}
+          />
+          <Typography
+            component="span"
+            variant="h5"
+            sx={{
+              minWidth: 0,
+              fontSize: { xs: "1.15rem", md: "1.4rem" },
+              fontWeight: 650,
+              letterSpacing: "-0.02em",
+              color: "text.primary",
+              lineHeight: 1.2,
+            }}
+          >
+            {t("header.brand")}
+          </Typography>
+        </Box>
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
           <ViewToggle

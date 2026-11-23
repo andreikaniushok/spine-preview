@@ -300,13 +300,12 @@ function App() {
         {latestNotice ? (
           <Snackbar
             open
-            anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
             sx={{
               bottom: { xs: 12, md: 24 },
-              left: { xs: 8, md: "50%" },
-              right: { xs: 8, md: "auto" },
-              transform: { md: "translateX(-50%)" },
-              width: { xs: "auto", md: "auto" },
+              right: { xs: 12, md: 24 },
+              left: "auto",
+              transform: "none",
             }}
           >
             <Alert
