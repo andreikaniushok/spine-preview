@@ -218,6 +218,7 @@ function App() {
 
             {isMetricsVisible ? (
               <Paper
+                elevation={2}
                 sx={{
                   position: "absolute",
                   zIndex: 2,
@@ -243,6 +244,7 @@ function App() {
 
             {!vm.activeModel ? (
               <Paper
+                elevation={2}
                 sx={{
                   position: "absolute",
                   zIndex: 1,

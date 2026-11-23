@@ -1,4 +1,7 @@
-import { AppBar, Box, FormControlLabel, Switch, Toolbar, Typography } from "@mui/material";
+import InsightsOutlinedIcon from "@mui/icons-material/InsightsOutlined";
+import SpeedOutlinedIcon from "@mui/icons-material/SpeedOutlined";
+import { AppBar, Box, ToggleButton, Toolbar, Typography } from "@mui/material";
+import type { ReactNode } from "react";
 import { useI18n } from "../i18n/useI18n";
 import { SettingsMenu } from "./SettingsMenu";
 
@@ -34,71 +37,97 @@ export function AppHeader({
       }}
     >
       <Toolbar
-        variant="dense"
         sx={{
-          gap: { xs: 1, md: 2 },
+          gap: 1,
           flexWrap: "wrap",
-          py: { xs: 0.75, md: 1 },
-          px: { xs: 1, md: 2 },
-          minHeight: { xs: 44, md: 48 },
+          py: 1,
+          px: { xs: 1.5, md: 2 },
+          minHeight: 56,
           justifyContent: "space-between",
           alignItems: "center",
         }}
       >
         <Typography
+          component="h1"
           variant="h5"
-          component="span"
           sx={{
-            fontSize: { xs: "1.15rem", sm: "1.4rem", md: "1.5rem" },
+            m: 0,
+            minWidth: 0,
+            fontSize: { xs: "1.15rem", md: "1.4rem" },
             fontWeight: 650,
             letterSpacing: "-0.02em",
-            background: "linear-gradient(90deg, #6a1bb1 0%, #1f4fd6 100%)",
-            WebkitBackgroundClip: "text",
-            backgroundClip: "text",
-            color: "transparent",
+            color: "text.primary",
             lineHeight: 1.2,
           }}
         >
           {t("header.brand")}
         </Typography>
 
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: { xs: 0.25, sm: 1.5 },
-            flexWrap: "nowrap",
-            justifyContent: "flex-end",
-            flex: { xs: "1 1 auto", sm: "0 1 auto" },
-            minWidth: 0,
-            overflowX: "auto",
-          }}
-        >
-          <FormControlLabel
-            sx={{ mr: { xs: 0, sm: 1 }, ml: 0 }}
-            control={
-              <Switch
-                checked={analyticsVisible}
-                onChange={(e) => onAnalyticsVisibleChange(e.target.checked)}
-                slotProps={{ input: { "aria-label": t("header.analytics_aria") } }}
-              />
-            }
-            label={analyticsVisible ? t("header.analytics_on") : t("header.analytics_off")}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          <ViewToggle
+            pressed={analyticsVisible}
+            label={t("header.analytics_on")}
+            ariaLabel={t("header.analytics_aria")}
+            onChange={onAnalyticsVisibleChange}
+            icon={<InsightsOutlinedIcon aria-hidden fontSize="small" />}
           />
-          <FormControlLabel
-            sx={{ mr: { xs: 0, sm: 1 }, ml: 0 }}
-            control={
-              <Switch
-                checked={metricsVisible}
-                onChange={(e) => onMetricsVisibleChange(e.target.checked)}
-                slotProps={{ input: { "aria-label": t("header.metrics_aria") } }}
-              />
-            }
-            label={metricsVisible ? t("header.metrics_on") : t("header.metrics_off")}
+          <ViewToggle
+            pressed={metricsVisible}
+            label={t("header.metrics_on")}
+            ariaLabel={t("header.metrics_aria")}
+            onChange={onMetricsVisibleChange}
+            icon={<SpeedOutlinedIcon aria-hidden fontSize="small" />}
           />
           <SettingsMenu theme={theme} onThemeChange={onThemeChange} />
         </Box>
       </Toolbar>
     </AppBar>
+  );
+}
+
+function ViewToggle({
+  pressed,
+  label,
+  ariaLabel,
+  onChange,
+  icon,
+}: {
+  pressed: boolean;
+  label: string;
+  ariaLabel: string;
+  onChange: (pressed: boolean) => void;
+  icon: ReactNode;
+}) {
+  return (
+    <ToggleButton
+      value={label}
+      selected={pressed}
+      aria-label={ariaLabel}
+      onChange={() => onChange(!pressed)}
+      sx={(muiTheme) => {
+        const dark = muiTheme.palette.mode === "dark";
+        const labelColor = "primary.main";
+        const borderColor = dark ? "#8AA0B2" : "#6A8094";
+        return {
+          gap: 0.75,
+          px: 1.5,
+          color: labelColor,
+          borderColor,
+          "&:hover": {
+            color: labelColor,
+            borderColor,
+            backgroundColor: dark ? "rgba(213, 222, 232, 0.08)" : "rgba(62, 83, 104, 0.06)",
+          },
+          "&&.Mui-selected, &&.Mui-selected:hover": {
+            color: labelColor,
+            borderColor: labelColor,
+            backgroundColor: dark ? "rgba(213, 222, 232, 0.18)" : "rgba(62, 83, 104, 0.12)",
+          },
+        };
+      }}
+    >
+      {icon}
+      {label}
+    </ToggleButton>
   );
 }

@@ -8,6 +8,7 @@ export const plMessages: Record<MessageKey, string> = {
 
   "header.brand": "Spine Preview",
   "header.theme_aria": "Przełącz jasny motyw",
+  "header.theme_choice": "Motyw",
   "header.theme_light": "Jasny",
   "header.theme_dark": "Ciemny",
   "header.language_aria": "Język interfejsu",

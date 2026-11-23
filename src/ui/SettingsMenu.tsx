@@ -1,18 +1,20 @@
-import SettingsIcon from "@mui/icons-material/Settings";
+import DarkModeOutlinedIcon from "@mui/icons-material/DarkModeOutlined";
+import LightModeOutlinedIcon from "@mui/icons-material/LightModeOutlined";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import {
   Box,
+  Button,
   Dialog,
   DialogContent,
   DialogTitle,
   Divider,
   FormControl,
-  FormControlLabel,
-  IconButton,
   InputLabel,
   MenuItem,
   Select,
   Stack,
-  Switch,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { useState } from "react";
@@ -39,14 +41,15 @@ export function SettingsMenu({ theme, onThemeChange }: SettingsMenuProps) {
 
   return (
     <>
-      <IconButton
-        size="small"
+      <Button
+        variant="outlined"
         onClick={() => setOpen(true)}
         aria-label={t("settings.aria")}
-        color="inherit"
+        startIcon={<SettingsOutlinedIcon aria-hidden />}
+        sx={{ minHeight: 44 }}
       >
-        <SettingsIcon fontSize="small" />
-      </IconButton>
+        {t("settings.title")}
+      </Button>
 
       <Dialog
         open={open}
@@ -79,18 +82,29 @@ export function SettingsMenu({ theme, onThemeChange }: SettingsMenuProps) {
                   </Select>
                 </FormControl>
 
-                <FormControlLabel
-                  sx={{ ml: 0, mr: 0, justifyContent: "space-between" }}
-                  labelPlacement="start"
-                  control={
-                    <Switch
-                      checked={theme === "light"}
-                      onChange={(e) => onThemeChange(e.target.checked ? "light" : "dark")}
-                      slotProps={{ input: { "aria-label": t("header.theme_aria") } }}
-                    />
-                  }
-                  label={theme === "light" ? t("header.theme_light") : t("header.theme_dark")}
-                />
+                <Box>
+                  <Typography variant="body2" id="settings-theme-label" sx={{ mb: 1 }}>
+                    {t("header.theme_choice")}
+                  </Typography>
+                  <ToggleButtonGroup
+                    exclusive
+                    fullWidth
+                    value={theme}
+                    aria-labelledby="settings-theme-label"
+                    onChange={(_, value: "dark" | "light" | null) => {
+                      if (value) onThemeChange(value);
+                    }}
+                  >
+                    <ToggleButton value="light" sx={{ flex: 1, gap: 0.75 }}>
+                      <LightModeOutlinedIcon aria-hidden fontSize="small" />
+                      {t("header.theme_light")}
+                    </ToggleButton>
+                    <ToggleButton value="dark" sx={{ flex: 1, gap: 0.75 }}>
+                      <DarkModeOutlinedIcon aria-hidden fontSize="small" />
+                      {t("header.theme_dark")}
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                </Box>
               </Stack>
             </Box>
 

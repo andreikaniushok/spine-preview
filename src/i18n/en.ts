@@ -6,6 +6,7 @@ export const enMessages = {
 
   "header.brand": "Spine Preview",
   "header.theme_aria": "Toggle light theme",
+  "header.theme_choice": "Theme",
   "header.theme_light": "Light",
   "header.theme_dark": "Dark",
   "header.language_aria": "Interface language",

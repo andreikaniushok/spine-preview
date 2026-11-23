@@ -1,3 +1,6 @@
+import PauseIcon from "@mui/icons-material/Pause";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
   Box,
   Button,
@@ -13,6 +16,8 @@ import {
   Select,
   Slider,
   Stack,
+  ToggleButton,
+  ToggleButtonGroup,
   Typography,
 } from "@mui/material";
 import { useI18n } from "../i18n/useI18n";
@@ -67,6 +72,8 @@ export function ControlPanel(props: ControlPanelProps) {
 
   const { t } = useI18n();
   const animations = activeModel?.animations ?? [];
+  const hasModel = activeModel !== null;
+  const skins = activeModel?.skins ?? [];
 
   return (
     <Paper
@@ -98,12 +105,13 @@ export function ControlPanel(props: ControlPanelProps) {
       <Stack spacing={1}>
         <Typography variant="subtitle2">{t("control.models")}</Typography>
         <Stack direction="row" spacing={1} sx={{ alignItems: "center", minWidth: 0 }}>
-          <FormControl fullWidth size="small" sx={{ minWidth: 0 }}>
+          <FormControl fullWidth size="small" disabled={models.length === 0} sx={{ minWidth: 0 }}>
             <InputLabel id="model-select-label">{t("control.select_model")}</InputLabel>
             <Select
               labelId="model-select-label"
               label={t("control.select_model")}
               value={activeModel?.id ?? ""}
+              disabled={models.length === 0}
               onChange={(e) => onModelSelect(e.target.value)}
             >
               <MenuItem value="">
@@ -220,57 +228,91 @@ export function ControlPanel(props: ControlPanelProps) {
       <Stack spacing={1.5}>
         <Typography variant="subtitle2">{t("control.playback")}</Typography>
         <Stack direction="row" spacing={1}>
-          <Button fullWidth size="small" onClick={onPauseToggle}>
+          <Button
+            fullWidth
+            variant="contained"
+            disabled={!hasModel}
+            startIcon={paused ? <PlayArrowIcon aria-hidden /> : <PauseIcon aria-hidden />}
+            onClick={onPauseToggle}
+            sx={{ minHeight: 44 }}
+          >
             {paused ? t("control.play") : t("control.pause")}
           </Button>
-          <Button fullWidth size="small" onClick={onReset}>
+          <Button
+            fullWidth
+            disabled={!hasModel}
+            startIcon={<RestartAltIcon aria-hidden />}
+            onClick={onReset}
+            sx={{ minHeight: 44 }}
+          >
             {t("control.reset")}
           </Button>
         </Stack>
-        <FormControl fullWidth size="small">
-          <InputLabel id="mode-label">{t("control.mode")}</InputLabel>
-          <Select
-            labelId="mode-label"
-            label={t("control.mode")}
+        <Box>
+          <Typography variant="body2" id="mode-label" sx={{ mb: 1 }}>
+            {t("control.mode")}
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            fullWidth
+            disabled={!hasModel}
             value={mode}
-            onChange={(e) => onModeChange(e.target.value as PlaybackMode)}
+            aria-labelledby="mode-label"
+            onChange={(_, value: PlaybackMode | null) => {
+              if (value) onModeChange(value);
+            }}
           >
-            <MenuItem value="loop">{t("control.loop")}</MenuItem>
-            <MenuItem value="once">{t("control.once")}</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl fullWidth size="small">
-          <InputLabel id="speed-label">{t("control.speed")}</InputLabel>
-          <Select
-            labelId="speed-label"
-            label={t("control.speed")}
-            value={speed}
-            onChange={(e) => onSpeedChange(Number(e.target.value))}
+            <ToggleButton value="loop" sx={{ flex: 1 }}>
+              {t("control.loop")}
+            </ToggleButton>
+            <ToggleButton value="once" sx={{ flex: 1 }}>
+              {t("control.once")}
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+        <Box>
+          <Typography variant="body2" id="speed-label" sx={{ mb: 1 }}>
+            {t("control.speed")}
+          </Typography>
+          <ToggleButtonGroup
+            exclusive
+            fullWidth
+            disabled={!hasModel}
+            value={String(speed)}
+            aria-labelledby="speed-label"
+            onChange={(_, value: string | null) => {
+              if (value) onSpeedChange(Number(value));
+            }}
           >
             {speedPreset.map((item) => (
-              <MenuItem key={item} value={item}>
+              <ToggleButton key={item} value={String(item)} sx={{ flex: 1, px: 0.5 }}>
                 {item}x
-              </MenuItem>
+              </ToggleButton>
             ))}
-          </Select>
-        </FormControl>
+          </ToggleButtonGroup>
+        </Box>
       </Stack>
 
       <Stack spacing={1.5}>
         <Typography variant="subtitle2">{t("control.appearance")}</Typography>
-        <FormControl fullWidth size="small">
+        <FormControl fullWidth size="small" disabled={!hasModel || skins.length === 0}>
           <InputLabel id="skin-label">{t("control.skin")}</InputLabel>
           <Select
             labelId="skin-label"
             label={t("control.skin")}
-            value={selectedSkin}
+            value={skins.includes(selectedSkin) ? selectedSkin : ""}
+            disabled={!hasModel || skins.length === 0}
             onChange={(e) => onSkinChange(e.target.value)}
           >
-            {activeModel?.skins.map((skinName) => (
-              <MenuItem key={skinName} value={skinName}>
-                {skinName}
-              </MenuItem>
-            )) ?? <MenuItem value="">{t("control.default_skin")}</MenuItem>}
+            {skins.length > 0 ? (
+              skins.map((skinName) => (
+                <MenuItem key={skinName} value={skinName}>
+                  {skinName}
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem value="">{t("control.default_skin")}</MenuItem>
+            )}
           </Select>
         </FormControl>
         <Box>
@@ -283,11 +325,13 @@ export function ControlPanel(props: ControlPanelProps) {
             max={1}
             step={0.05}
             value={alpha}
+            disabled={!hasModel}
             onChange={(_, value) => onAlphaChange(value as number)}
             size="small"
           />
         </Box>
         <FormControlLabel
+          disabled={!hasModel}
           control={
             <Checkbox
               checked={debugBones}

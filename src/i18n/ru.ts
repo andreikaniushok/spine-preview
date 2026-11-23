@@ -8,6 +8,7 @@ export const ruMessages: Record<MessageKey, string> = {
 
   "header.brand": "Spine Preview",
   "header.theme_aria": "Переключить светлую тему",
+  "header.theme_choice": "Тема",
   "header.theme_light": "Светлая",
   "header.theme_dark": "Тёмная",
   "header.language_aria": "Язык интерфейса",
