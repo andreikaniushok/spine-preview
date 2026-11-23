@@ -145,9 +145,15 @@ export class SpineManager implements ISpineManager {
       const i = this.stressCopies.length + 1;
       clone.x = (i % 5) * 24;
       clone.y = Math.floor(i / 5) * 24;
-      if (active.spine.state.tracks[0]?.animation) {
-        const anim = active.spine.state.tracks[0].animation;
-        clone.state.setAnimation(0, anim.name, true);
+      clone.state.timeScale = active.spine.state.timeScale;
+      const sourceTracks = active.spine.state.tracks;
+      for (let index = 0; index < sourceTracks.length; index += 1) {
+        const entry = sourceTracks[index];
+        if (!entry?.animation) {
+          continue;
+        }
+        const cloned = clone.state.setAnimation(index, entry.animation.name, entry.loop);
+        cloned.mixBlend = entry.mixBlend;
       }
       this.layer.addChild(clone);
       this.stressCopies.push(clone);

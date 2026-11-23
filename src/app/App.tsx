@@ -75,6 +75,8 @@ function App() {
           models={vm.models}
           activeModel={vm.activeModel}
           activeAnimation={vm.activeAnimation}
+          animationTracks={vm.animationTracks}
+          activeTrackId={vm.activeTrackId}
           speed={vm.speed}
           mode={vm.mode}
           paused={vm.paused}
@@ -84,6 +86,11 @@ function App() {
           onModelSelect={preview.actions.selectModel}
           onModelRemove={preview.actions.removeModel}
           onAnimationPlay={preview.actions.playAnimation}
+          onTrackSelect={preview.actions.selectAnimationTrack}
+          onTrackAnimation={preview.actions.setTrackAnimation}
+          onTrackMix={preview.actions.setTrackMix}
+          onAddTrack={preview.actions.addAnimationTrack}
+          onRemoveTrack={preview.actions.removeAnimationTrack}
           onSpeedChange={preview.actions.changeSpeed}
           onModeChange={preview.actions.setPlaybackMode}
           onPauseToggle={preview.actions.togglePause}

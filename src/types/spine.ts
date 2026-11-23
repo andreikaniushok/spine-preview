@@ -72,3 +72,16 @@ export type BenchmarkUiState =
   | { status: "done"; result: BenchmarkResult };
 
 export type PlaybackMode = "loop" | "once";
+
+/** How a track above 0 mixes onto the tracks below it. */
+export type TrackMix = "replace" | "add";
+
+/** One Spine animation-state track on the active skeleton. */
+export interface AnimationTrack {
+  id: string;
+  animation: string | null;
+  mix: TrackMix;
+}
+
+/** Upper bound so the track list stays usable in the side panel. */
+export const MAX_ANIMATION_TRACKS = 8;
