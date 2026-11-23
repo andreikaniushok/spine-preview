@@ -7,11 +7,13 @@ import {
   buildSkeletonStructureStats,
 } from "../analytics";
 import type {
+  AnimationTrack,
   BenchmarkResult,
   BenchmarkUiState,
   PerformanceSnapshot,
   PlaybackMode,
   SpineModel,
+  TrackMix,
 } from "../types";
 import type { MessageKey } from "../i18n/messages";
 import type { MessageVars } from "../i18n/types";
@@ -71,6 +73,8 @@ export function useSpinePreview() {
   const [models, setModels] = useState<SpineModel[]>([]);
   const [activeModel, setActiveModel] = useState<SpineModel | null>(null);
   const [activeAnimation, setActiveAnimation] = useState<string | null>(null);
+  const [tracks, setTracks] = useState<AnimationTrack[]>([]);
+  const [activeTrackId, setActiveTrackId] = useState<string | null>(null);
   const [speed, setSpeed] = useState(persisted.speed);
   const [mode, setModeState] = useState<PlaybackMode>(persisted.mode);
   const [paused, setPaused] = useState(false);
@@ -147,13 +151,15 @@ export function useSpinePreview() {
     );
   }, [activeModel?.id, activeModel?.atlasText, activeModel?.atlasFileName, selectedSkin, activeSkinName]);
 
+  const trackPoseKey = tracks.map((track) => `${track.animation ?? ""}:${track.mix}`).join("|");
+
   // Draw-call estimate only when pose inputs change — not every frame (that lagged analytics).
   const atlasReport = useMemo(() => {
     if (!atlasCore || !activeModel) {
       return atlasCore;
     }
     return attachAtlasRenderPasses(atlasCore, activeModel.spine.skeleton);
-  }, [atlasCore, activeModel, selectedSkin, activeSkinName, activeAnimation]);
+  }, [atlasCore, activeModel, selectedSkin, activeSkinName, trackPoseKey]);
 
   const liveDrawCalls = atlasReport?.renderPasses?.estimatedDrawCalls ?? null;
 
@@ -227,6 +233,36 @@ export function useSpinePreview() {
     };
   }, []);
 
+  const syncPlayback = useCallback(() => {
+    const animation = animationRef.current;
+    if (!animation) {
+      setTracks([]);
+      setActiveTrackId(null);
+      setActiveAnimation(null);
+      return;
+    }
+    const nextTracks = animation.tracks;
+    setTracks(nextTracks);
+    setActiveTrackId(animation.activeTrackId);
+    const active = nextTracks.find((track) => track.id === animation.activeTrackId);
+    setActiveAnimation(active?.animation ?? null);
+    setPaused(animation.state.paused);
+  }, []);
+
+  const bindModel = useCallback(
+    (model: SpineModel | null) => {
+      const animation = animationRef.current;
+      if (!animation) {
+        return;
+      }
+      animation.bind(model);
+      animation.setSpeed(speed);
+      animation.setMode(mode);
+      syncPlayback();
+    },
+    [mode, speed, syncPlayback],
+  );
+
   const loadFiles = useCallback(async (files: FileList) => {
     const bundles = SpineBundleParser.parseBundles(files);
     const manager = spineManagerRef.current;
@@ -256,7 +292,7 @@ export function useSpinePreview() {
         pushNotice("success", "notice.loaded_ok", { name: model.name });
         if (!manager.getActiveModel() || !activeModel) {
           setActiveModel(model);
-          animation.bind(model);
+          bindModel(model);
           centerModelInCanvas(model);
           setSelectedSkin(model.skins[0] ?? "");
         }
@@ -266,7 +302,7 @@ export function useSpinePreview() {
         pushNotice("error", "notice.load_failed", { name: bundle.name, details });
       }
     }
-  }, [activeModel, pushNotice, centerModelInCanvas]);
+  }, [activeModel, pushNotice, centerModelInCanvas, bindModel]);
 
   const selectModel = useCallback((id: string) => {
     const manager = spineManagerRef.current;
@@ -277,14 +313,12 @@ export function useSpinePreview() {
     }
     const model = manager.setActiveModel(id);
     setActiveModel(model);
-    animation.bind(model);
-    setActiveAnimation(null);
-    setPaused(false);
+    bindModel(model);
     if (model) {
       centerModelInCanvas(model);
       setSelectedSkin(model.skins[0] ?? "");
     }
-  }, [centerModelInCanvas]);
+  }, [centerModelInCanvas, bindModel]);
 
   const removeModel = useCallback((id: string) => {
     const manager = spineManagerRef.current;
@@ -297,27 +331,49 @@ export function useSpinePreview() {
     const nextModel = manager.removeModel(id);
     setModels(manager.models);
     setActiveModel(nextModel);
-    setActiveAnimation(null);
-    setPaused(false);
     setDebugBones(false);
 
     if (nextModel) {
-      animation.bind(nextModel);
+      bindModel(nextModel);
       centerModelInCanvas(nextModel);
       setSelectedSkin(nextModel.skins[0] ?? "");
       pushNotice("info", "notice.removed_active", { name: nextModel.name });
     } else {
-      animation.bind(null);
+      bindModel(null);
       setSelectedSkin("");
       pushNotice("info", "notice.removed_none");
     }
-  }, [pushNotice, centerModelInCanvas]);
+  }, [pushNotice, centerModelInCanvas, bindModel]);
 
   const playAnimation = useCallback((name: string) => {
     animationRef.current?.play(name);
-    setActiveAnimation(name);
-    setPaused(false);
-  }, []);
+    syncPlayback();
+  }, [syncPlayback]);
+
+  const selectAnimationTrack = useCallback((trackId: string) => {
+    animationRef.current?.selectTrack(trackId);
+    syncPlayback();
+  }, [syncPlayback]);
+
+  const setTrackAnimation = useCallback((trackId: string, animation: string | null) => {
+    animationRef.current?.setTrackAnimation(trackId, animation);
+    syncPlayback();
+  }, [syncPlayback]);
+
+  const setTrackMix = useCallback((trackId: string, mix: TrackMix) => {
+    animationRef.current?.setTrackMix(trackId, mix);
+    syncPlayback();
+  }, [syncPlayback]);
+
+  const addAnimationTrack = useCallback(() => {
+    animationRef.current?.addTrack();
+    syncPlayback();
+  }, [syncPlayback]);
+
+  const removeAnimationTrack = useCallback((trackId: string) => {
+    animationRef.current?.removeTrack(trackId);
+    syncPlayback();
+  }, [syncPlayback]);
 
   const setPlaybackMode = useCallback((nextMode: PlaybackMode) => {
     animationRef.current?.setMode(nextMode);
@@ -340,8 +396,8 @@ export function useSpinePreview() {
 
   const reset = useCallback(() => {
     animationRef.current?.reset();
-    setPaused(false);
-  }, []);
+    syncPlayback();
+  }, [syncPlayback]);
 
   const setSkin = useCallback((skinName: string) => {
     animationRef.current?.setSkin(skinName);
@@ -433,6 +489,8 @@ export function useSpinePreview() {
         models,
         activeModel,
         activeAnimation,
+        animationTracks: tracks,
+        activeTrackId,
         speed,
         mode,
         paused,
@@ -454,6 +512,11 @@ export function useSpinePreview() {
         selectModel,
         removeModel,
         playAnimation,
+        selectAnimationTrack,
+        setTrackAnimation,
+        setTrackMix,
+        addAnimationTrack,
+        removeAnimationTrack,
         setPlaybackMode,
         changeSpeed,
         togglePause,
@@ -474,6 +537,8 @@ export function useSpinePreview() {
       models,
       activeModel,
       activeAnimation,
+      tracks,
+      activeTrackId,
       speed,
       mode,
       paused,
@@ -493,6 +558,11 @@ export function useSpinePreview() {
       selectModel,
       removeModel,
       playAnimation,
+      selectAnimationTrack,
+      setTrackAnimation,
+      setTrackMix,
+      addAnimationTrack,
+      removeAnimationTrack,
       setPlaybackMode,
       changeSpeed,
       togglePause,

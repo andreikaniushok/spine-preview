@@ -1,12 +1,19 @@
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import PauseIcon from "@mui/icons-material/Pause";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
 import {
+  Accordion,
+  AccordionDetails,
+  AccordionSummary,
   Box,
   Button,
   Checkbox,
   FormControl,
   FormControlLabel,
+  IconButton,
   InputLabel,
   List,
   ListItemButton,
@@ -21,12 +28,14 @@ import {
   Typography,
 } from "@mui/material";
 import { useI18n } from "../i18n/useI18n";
-import type { PlaybackMode, SpineModel } from "../types";
+import { MAX_ANIMATION_TRACKS, type AnimationTrack, type PlaybackMode, type SpineModel, type TrackMix } from "../types";
 
 interface ControlPanelProps {
   models: SpineModel[];
   activeModel: SpineModel | null;
   activeAnimation: string | null;
+  animationTracks: AnimationTrack[];
+  activeTrackId: string | null;
   speed: number;
   mode: PlaybackMode;
   paused: boolean;
@@ -36,6 +45,11 @@ interface ControlPanelProps {
   onModelSelect: (id: string) => void;
   onModelRemove: (id: string) => void;
   onAnimationPlay: (name: string) => void;
+  onTrackSelect: (trackId: string) => void;
+  onTrackAnimation: (trackId: string, animation: string | null) => void;
+  onTrackMix: (trackId: string, mix: TrackMix) => void;
+  onAddTrack: () => void;
+  onRemoveTrack: (trackId: string) => void;
   onSpeedChange: (value: number) => void;
   onModeChange: (value: PlaybackMode) => void;
   onPauseToggle: () => void;
@@ -52,6 +66,8 @@ export function ControlPanel(props: ControlPanelProps) {
     models,
     activeModel,
     activeAnimation,
+    animationTracks,
+    activeTrackId,
     speed,
     mode,
     paused,
@@ -61,6 +77,11 @@ export function ControlPanel(props: ControlPanelProps) {
     onModelSelect,
     onModelRemove,
     onAnimationPlay,
+    onTrackSelect,
+    onTrackAnimation,
+    onTrackMix,
+    onAddTrack,
+    onRemoveTrack,
     onSpeedChange,
     onModeChange,
     onPauseToggle,
@@ -74,6 +95,16 @@ export function ControlPanel(props: ControlPanelProps) {
   const animations = activeModel?.animations ?? [];
   const hasModel = activeModel !== null;
   const skins = activeModel?.skins ?? [];
+  const shownTracks: AnimationTrack[] =
+    animationTracks.length > 0
+      ? animationTracks
+      : [{ id: "pending", animation: null, mix: "replace" }];
+  const activeTrackIndex = Math.max(
+    0,
+    animationTracks.findIndex((track) => track.id === activeTrackId),
+  );
+  const canAddTrack =
+    hasModel && animationTracks.length > 0 && animationTracks.length < MAX_ANIMATION_TRACKS;
 
   return (
     <Paper
@@ -138,6 +169,9 @@ export function ControlPanel(props: ControlPanelProps) {
 
       <Stack spacing={1} sx={{ flexShrink: 0 }}>
         <Typography variant="subtitle2">{t("control.animations")}</Typography>
+        <Typography variant="caption" color="text.secondary">
+          {t("control.assign_track", { index: activeTrackIndex })}
+        </Typography>
 
         <FormControl
           fullWidth
@@ -198,7 +232,12 @@ export function ControlPanel(props: ControlPanelProps) {
           }}
         >
           {animations.length > 0 ? (
-            animations.map((name) => (
+            animations.map((name) => {
+              const usedOn = animationTracks
+                .flatMap((track, index) => (track.animation === name ? [index] : []))
+                .map((index) => t("control.track_label", { index }))
+                .join(", ");
+              return (
               <ListItemButton
                 key={name}
                 selected={activeAnimation === name}
@@ -206,15 +245,20 @@ export function ControlPanel(props: ControlPanelProps) {
               >
                 <ListItemText
                   primary={name}
+                  secondary={usedOn || undefined}
                   slotProps={{
                     primary: {
                       variant: "body2",
                       sx: { whiteSpace: "normal", wordBreak: "break-word" },
                     },
+                    secondary: {
+                      variant: "caption",
+                    },
                   }}
                 />
               </ListItemButton>
-            ))
+              );
+            })
           ) : (
             <Box sx={{ px: 1.5, py: 1 }}>
               <Typography variant="body2" color="text.secondary">
@@ -249,7 +293,7 @@ export function ControlPanel(props: ControlPanelProps) {
           </Button>
         </Stack>
         <Box>
-          <Typography variant="body2" id="mode-label" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" id="mode-label" sx={{ mb: 1 }}>
             {t("control.mode")}
           </Typography>
           <ToggleButtonGroup
@@ -271,7 +315,7 @@ export function ControlPanel(props: ControlPanelProps) {
           </ToggleButtonGroup>
         </Box>
         <Box>
-          <Typography variant="body2" id="speed-label" sx={{ mb: 1 }}>
+          <Typography variant="subtitle2" id="speed-label" sx={{ mb: 1 }}>
             {t("control.speed")}
           </Typography>
           <ToggleButtonGroup
@@ -316,7 +360,7 @@ export function ControlPanel(props: ControlPanelProps) {
           </Select>
         </FormControl>
         <Box>
-          <Typography variant="caption" color="text.secondary" gutterBottom sx={{ display: "block" }}>
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>
             {t("control.alpha")}: {alpha.toFixed(2)}
           </Typography>
           <Slider
@@ -342,6 +386,119 @@ export function ControlPanel(props: ControlPanelProps) {
           label={t("control.debug_bones")}
         />
       </Stack>
+
+      <Accordion
+        disableGutters
+        elevation={0}
+        sx={{
+          bgcolor: "transparent",
+          backgroundImage: "none",
+          boxShadow: "none",
+          "&:before": { display: "none" },
+        }}
+      >
+        <AccordionSummary
+          expandIcon={<ExpandMoreIcon />}
+          aria-controls="animation-tracks-content"
+          id="animation-tracks-header"
+          sx={{
+            px: 0,
+            minHeight: 44,
+            "& .MuiAccordionSummary-content": { my: 0.5 },
+          }}
+        >
+          <Typography variant="subtitle2">{t("control.tracks")}</Typography>
+        </AccordionSummary>
+        <AccordionDetails id="animation-tracks-content" sx={{ px: 0, pt: 0 }}>
+          <Stack spacing={1}>
+            <Typography variant="caption" color="text.secondary">
+              {t("control.tracks_hint")}
+            </Typography>
+            {shownTracks.map((track, index) => {
+              const isActive = hasModel && track.id === activeTrackId;
+              const selectedAnimation = animations.includes(track.animation ?? "") ? (track.animation ?? "") : "";
+              return (
+                <Box
+                  key={track.id}
+                  sx={{
+                    border: 1,
+                    borderColor: isActive ? "primary.main" : "divider",
+                    borderRadius: 1,
+                    p: 1,
+                  }}
+                >
+                  <Stack direction="row" sx={{ alignItems: "center", justifyContent: "space-between", mb: 0.75 }}>
+                    <Button
+                      size="small"
+                      variant={isActive ? "contained" : "text"}
+                      disabled={!hasModel}
+                      aria-pressed={isActive}
+                      onClick={() => onTrackSelect(track.id)}
+                      sx={{ minHeight: 44, px: 1.25 }}
+                    >
+                      {t("control.track_label", { index })}
+                    </Button>
+                    <IconButton
+                      aria-label={t("control.remove_track", { index })}
+                      disabled={!hasModel || animationTracks.length < 2}
+                      onClick={() => onRemoveTrack(track.id)}
+                      sx={{ width: 44, height: 44 }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </Stack>
+                  <FormControl fullWidth size="small" disabled={!hasModel || animations.length === 0}>
+                    <InputLabel id={`track-${track.id}-label`}>{t("control.select_animation")}</InputLabel>
+                    <Select
+                      labelId={`track-${track.id}-label`}
+                      label={t("control.select_animation")}
+                      value={selectedAnimation}
+                      onChange={(event) => {
+                        const name = event.target.value;
+                        onTrackAnimation(track.id, name || null);
+                      }}
+                    >
+                      <MenuItem value="">
+                        <em>{t("control.track_empty")}</em>
+                      </MenuItem>
+                      {animations.map((name) => (
+                        <MenuItem key={name} value={name} sx={{ whiteSpace: "normal" }}>
+                          {name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                  {index > 0 ? (
+                    <FormControlLabel
+                      disabled={!hasModel}
+                      sx={{ m: 0, mt: 0.5 }}
+                      control={
+                        <Checkbox
+                          size="small"
+                          checked={track.mix === "add"}
+                          onChange={(event) => onTrackMix(track.id, event.target.checked ? "add" : "replace")}
+                          slotProps={{ input: { "aria-label": t("control.track_additive") } }}
+                        />
+                      }
+                      label={t("control.track_additive")}
+                    />
+                  ) : null}
+                </Box>
+              );
+            })}
+            <Button
+              fullWidth
+              variant="outlined"
+              startIcon={<AddIcon aria-hidden />}
+              disabled={!canAddTrack}
+              onClick={onAddTrack}
+              sx={{ minHeight: 44 }}
+            >
+              {t("control.add_track")}
+            </Button>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
     </Paper>
   );
 }
